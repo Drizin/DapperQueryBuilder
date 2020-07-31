@@ -27,6 +27,7 @@ namespace DapperQueryBuilder
         private bool _isSelectDistinct = false;
         private StringBuilder _sql = null;
         public Dapper.DynamicParameters Parameters { get; set; }
+        private int _autoNamedParametersCount = 0;
 
         /// <summary>
         /// 
@@ -89,7 +90,7 @@ namespace DapperQueryBuilder
 
         public IFromBuilder From(string from)
         {
-            if (!_fromTables.Any() && Regex.Match(from, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace).Success == false)
+            if (!_fromTables.Any() && !Regex.IsMatch(from, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
                 from = "FROM " + from;
             _fromTables.Add(from);
             return this;
@@ -98,11 +99,13 @@ namespace DapperQueryBuilder
         public IWhereBuilder Where(FormattableString filter)
         {
             _filters.Add(new Filter(filter));
+            _autoNamedParametersCount++;
             return this;
         }
         public IWhereBuilder Where(RawString filter)
         {
             _filters.Add(new Filter(filter));
+            _autoNamedParametersCount++;
             return this;
         }
 
@@ -147,6 +150,7 @@ namespace DapperQueryBuilder
                 {
                     _sql = new StringBuilder();
                     Parameters = new DynamicParameters();
+                    _autoNamedParametersCount = 0;
                 }
 
                 // If RawSql is provided, we assume it contains both SELECT and FROMs
@@ -163,24 +167,44 @@ namespace DapperQueryBuilder
 
                 if (_filters.Any())
                 {
-                    StringBuilder filtersString = new StringBuilder();
+                    StringBuilder filtersString = new StringBuilder(); 
                     foreach (var filter in _filters)
                     {
-                        filtersString.Append(filter.Sql);
-                        Parameters.AddDynamicParams(filter.Parameters);
+                        if (_filters.IndexOf(filter) > 0)
+                            filtersString.Append(" AND ");
+                        string filterSql = filter.Sql;
+                        foreach(var parameterName in filter.Parameters.ParameterNames)
+                        {
+                            string newParameterName = parameterName;
+                            if (Parameters.ParameterNames.Contains(parameterName) || Regex.IsMatch(parameterName, "p(\\d)*"))
+                            {
+                                newParameterName = "p" + _autoNamedParametersCount.ToString();
+                                filterSql = filterSql.Replace("@" + parameterName, "@" + newParameterName);
+                                _autoNamedParametersCount++;
+                            }
+                            filtersString.Append(filterSql);
+                            Parameters.Add(newParameterName, filter.Parameters.Get<object>(parameterName));
+                        }
+
                     }
-                    //TODO: if query has "{where}" or "/**where**/, just replace that by with WHERE + filtersString ....
-                    // else...
-                    //TODO: if query has "{filters}" or "/**filters**/, just replace that by with filtersString
-                    // else...
-                    //TODO: if RawSql was provided, check if RawSql ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
-                    // else...
-                    //TODO: if RawSql was provided, check if RawSql ends has WHERE with real conditions... set hasWhereConditions=true 
-                    // else...
-                    _sql.Append("WHERE " + filtersString.ToString());
+                    if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("/**where**/"))
+                        _sql.Replace("/**where**/", "WHERE " + filtersString.ToString());
+                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("{where}"))
+                        _sql.Replace("{where}", "WHERE " + filtersString.ToString());
+                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("/**filters**/"))
+                        _sql.Replace("/**filters**/", filtersString.ToString());
+                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("{filters}"))
+                        _sql.Replace("{filters}", filtersString.ToString());
+                    else
+                    {
+                        //TODO: if RawSql was provided, check if RawSql ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
+                        // else...
+                        //TODO: if RawSql was provided, check if RawSql ends has WHERE with real conditions... set hasWhereConditions=true 
+                        // else...
+                        _sql.AppendLine("WHERE " + filtersString.ToString());
+                    }
 
                 }
-                _sql.AppendLine();
                 if (_orderBy.Any())
                     _sql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
                 if (_groupBy.Any())
