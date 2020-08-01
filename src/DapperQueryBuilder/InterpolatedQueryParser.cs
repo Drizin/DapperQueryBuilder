@@ -1,40 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DapperQueryBuilder
 {
     /// <summary>
-    /// Parses an interpolated-string query into a string with parameters as @p0, @p1, etc, and a dictionary of parameter values.
+    /// Parses an interpolated-string SQL statement into a injection-safe statement (with parameters as @p0, @p1, etc) and a dictionary of parameter values.
     /// </summary>
-    public class InterpolatedQueryParser
+    [DebuggerDisplay("{Sql} ({_parametersStr})")]
+    public class InterpolatedStatementParser
     {
         #region Members
+        /// <summary>
+        /// Injection-safe statement, with parameters as @p0, @p1, etc.
+        /// </summary>
         public string Sql { get; set; }
+
+        /// <summary>
+        /// Dictionary of Dapper parameters
+        /// </summary>
         public Dapper.DynamicParameters Parameters { get; set; }
 
+
+        private string _parametersStr;
+
         private static Regex _formattableArgumentRegex = new Regex(
-              "{\\d(:(?<Format>[^}]*))?}",
+              "{(?<ArgPos>\\d*)(:(?<Format>[^}]*))?}",
             RegexOptions.IgnoreCase
             | RegexOptions.Singleline
             | RegexOptions.CultureInvariant
             | RegexOptions.IgnorePatternWhitespace
             | RegexOptions.Compiled
             );
-        private int _parametersCount = 0;
+        private int _autoNamedParametersCount = 0;
         #endregion
 
         #region ctor
         /// <summary>
-        /// Parses an interpolated-string query into a string with parameters as @p0, @p1, etc, and a dictionary of parameter values.
+        /// Parses an interpolated-string SQL statement into a injection-safe statement (with parameters as @p0, @p1, etc) and a dictionary of parameter values.
         /// </summary>
         /// <param name="query"></param>
-        public InterpolatedQueryParser(FormattableString query) : this(query.Format, query.GetArguments())
+        public InterpolatedStatementParser(FormattableString query) : this(query.Format, query.GetArguments())
         {
         }
-        private InterpolatedQueryParser(string format, params object[] arguments)
+        private InterpolatedStatementParser(string format, params object[] arguments)
         {
+            Parameters = new Dapper.DynamicParameters();
+
             StringBuilder sb = new StringBuilder();
             if (string.IsNullOrEmpty(format))
                 return;
@@ -46,13 +61,14 @@ namespace DapperQueryBuilder
                 string literal = format.Substring(lastPos, matches[i].Index - lastPos).Replace("{{", "{").Replace("}}", "}");
                 sb.Append(literal);
                 // arguments[i] may not work because same argument can be used multiple times
-                string argPos = matches[i].Value;
-                var arg = arguments[int.Parse(argPos.Substring(1, argPos.Length - 2))];
-                //string argFormat = matches[i].Groups["Format"].Value;
-                if (Parameters == null)
-                    Parameters = new Dapper.DynamicParameters();
-                string parmName = "@p" + _parametersCount.ToString();
-                _parametersCount++;
+                int argPos = int.Parse(matches[i].Groups["ArgPos"].Value);
+                string argFormat = matches[i].Groups["Format"].Value;
+                object arg = arguments[argPos];
+                string parmName = "@p" + _autoNamedParametersCount.ToString();
+                _autoNamedParametersCount++;
+                //var direction = System.Data.ParameterDirection.Input;
+                //if (argFormat == "out")
+                //    direction = System.Data.ParameterDirection.Output;
                 Parameters.Add(parmName, arg);
                 sb.Append(parmName);
 
@@ -61,6 +77,7 @@ namespace DapperQueryBuilder
             string lastPart = format.Substring(lastPos).Replace("{{", "{").Replace("}}", "}");
             sb.Append(lastPart);
             Sql = sb.ToString();
+            _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
         }
         #endregion
     }

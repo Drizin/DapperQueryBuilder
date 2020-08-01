@@ -22,13 +22,25 @@ namespace DapperQueryBuilder
         /// Creates a new QueryBuilder over current connection
         /// </summary>
         /// <param name="cnn"></param>
-        /// <param name="rawSql">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
+        /// <param name="query">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
         /// </param>
         /// <returns></returns>
-        public static IFromBuilder QueryBuilder(this IDbConnection cnn, string rawSql)
+        public static IFromBuilder QueryBuilder(this IDbConnection cnn, FormattableString query)
         {
-            return new QueryBuilder(cnn, rawSql);
+            return new QueryBuilder(cnn, query);
         }
+
+        /// <summary>
+        /// Creates a new CommandBuilder over current connection
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="command">SQL command</param>
+        /// <returns></returns>
+        public static CommandBuilder CommandBuilder(this IDbConnection cnn, FormattableString command)
+        {
+            return new CommandBuilder(cnn, command);
+        }
+
     }
 }

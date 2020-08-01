@@ -4,7 +4,10 @@ using System.Text;
 
 namespace DapperQueryBuilder
 {
-    public interface IGroupByBuilder : ICompleteQuery
+    /// <summary>
+    /// Query Builder with one or more groupby clauses, which can still add more clauses to groupby
+    /// </summary>
+    public interface IGroupByBuilder : ICommandBuilder, ICompleteQuery
     {
         IGroupByBuilder GroupBy(string groupBy);
         IGroupByHavingBuilder Having(string having);

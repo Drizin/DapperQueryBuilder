@@ -4,9 +4,32 @@ using System.Text;
 
 namespace DapperQueryBuilder
 {
-    public interface ISelectBuilder
+    /// <summary>
+    /// Query Builder which is preparing a SELECT statement
+    /// </summary>
+    public interface ISelectBuilder : ICommandBuilder
     {
-        ISelectBuilder Select(string select);
+        /// <summary>
+        /// Adds one column to the select clauses
+        /// </summary>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        ISelectBuilder Select(string column);
+
+        /// <summary>
+        /// Adds one or more columns to the select clauses
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="moreColumns"></param>
+        /// <returns></returns>
+        ISelectBuilder Select(string column, params string[] moreColumns);
+
+        /// <summary>
+        /// Adds a new table to from clauses. <br />
+        /// "FROM" word is optional. <br />
+        /// You can add an alias after table name. <br />
+        /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
+        /// </summary>
         IFromBuilder From(string from);
     }
 }

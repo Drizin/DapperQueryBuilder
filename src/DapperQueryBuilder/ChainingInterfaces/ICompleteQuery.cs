@@ -5,11 +5,14 @@ using System.Text;
 
 namespace DapperQueryBuilder
 {
-    public interface ICompleteQuery
+    /// <summary>
+    /// Query Builder in a state that is ready to execute Query
+    /// </summary>
+    public interface ICompleteQuery : ICommandBuilder
     {
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as T.
+        /// </summary>
         IEnumerable<T> Query<T>(IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null);
-        void AddDynamicParams(object param);
-        string Sql { get; }
-        Dapper.DynamicParameters Parameters { get; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace DapperQueryBuilder
@@ -10,6 +11,7 @@ namespace DapperQueryBuilder
     /// If you just pass a regular string it will be converted to RawString. 
     /// Based on https://www.damirscorner.com/blog/posts/20180921-FormattableStringAsMethodParameter.html
     /// </summary>
+    [DebuggerDisplay("{Value}")]
     public class RawString
     {
         private string Value { get; }

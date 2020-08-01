@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,11 +12,9 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder
     /// </summary>
-    public class QueryBuilder : IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteQuery
+    public class QueryBuilder : CommandBuilder, IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteQuery
     {
-
         #region Members
-        private readonly IDbConnection _cnn;
         private readonly List<string> _selectColumns = new List<string>();
         private readonly List<string> _fromTables = new List<string>();
         private readonly Filters _filters = new Filters();
@@ -25,14 +24,7 @@ namespace DapperQueryBuilder
         private int? _rowCount = null;
         private int? _offset = null;
         private bool _isSelectDistinct = false;
-        private StringBuilder _sql = null;
-        public Dapper.DynamicParameters Parameters { get; set; }
-        private int _autoNamedParametersCount = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string RawSql = null;
+        private string _queryTemplate = null;
         #endregion
 
         #region ctors
@@ -40,54 +32,73 @@ namespace DapperQueryBuilder
         /// New empty QueryBuilder. Should be constructed using .Select(), .From(), .Where(), etc.
         /// </summary>
         /// <param name="cnn"></param>
-        public QueryBuilder(IDbConnection cnn)
+        public QueryBuilder(IDbConnection cnn) : base(cnn)
         {
-            _cnn = cnn;
         }
 
         /// <summary>
-        /// New QueryBuilder based on an initial query. 
+        /// New QueryBuilder based on an initial query. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
         /// <param name="cnn"></param>
-        /// <param name="rawSql">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
+        /// <param name="query">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
         /// </param>
-        public QueryBuilder(IDbConnection cnn, string rawSql)
+        public QueryBuilder(IDbConnection cnn, FormattableString query) : base(cnn)
         {
-            _cnn = cnn;
-            RawSql = rawSql;
+            var parser = new InterpolatedStatementParser(query);
+            string querySql = parser.Sql;
+            foreach (var statementParameterName in parser.Parameters.ParameterNames)
+                base.AddParameter(statementParameterName, parser.Parameters.Get<object>(statementParameterName), ref querySql);
+            _queryTemplate = querySql;
         }
         #endregion
-
-        #region Query<T> - Invoke Dapper
 
         /// <summary>
-        /// Executes the query (using Dapper), returning the data typed as T.
+        /// Adds one column to the select clauses
         /// </summary>
-        public IEnumerable<T> Query<T>(IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null, CommandType? commandType = null)
+        public ISelectBuilder Select(string column)
         {
-            return _cnn.Query<T>(Sql, param: Parameters, transaction: transaction, buffered: buffered, commandTimeout: commandTimeout, commandType: commandType);
+            return Select(column, new string[] { });
         }
 
-        //TODO: IEnumerable<object> Query, IEnumerable<dynamic> Query
-        //TODO: Task<IEnumerable<dynamic>> QueryAsync, Task<IEnumerable<T>> QueryAsync<T>, Task<IEnumerable<object>> QueryAsync
-        //TODO: QueryFirst, QueryFirstAsync, QueryFirstOrDefault, QueryFirstOrDefaultAsync, QuerySingle, QuerySingleAsync
-
-        #endregion
-
-        public ISelectBuilder Select(string select)
+        /// <summary>
+        /// Adds one or more columns to the select clauses
+        /// </summary>
+        public ISelectBuilder Select(string column, params string[] moreColumns)
         {
-            _selectColumns.Add(select);
+            _selectColumns.Add(column);
+            foreach (var col in moreColumns)
+                _selectColumns.Add(col);
             return this;
         }
 
+        /// <summary>
+        /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
+        /// </summary>
         public ISelectDistinctBuilder SelectDistinct(string select)
         {
-            _selectColumns.Add(select);
+            return SelectDistinct(select, new string[] { });
+        }
+
+        /// <summary>
+        /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
+        /// </summary>
+        public ISelectDistinctBuilder SelectDistinct(string select, params string[] moreColumns)
+        {
             _isSelectDistinct = true;
+            _selectColumns.Add(select);
+            foreach (var col in moreColumns)
+                _selectColumns.Add(col);
             return this;
         }
 
+        /// <summary>
+        /// Adds a new table to from clauses. <br />
+        /// "FROM" word is optional. <br />
+        /// You can add an alias after table name. <br />
+        /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
+        /// </summary>
         public IFromBuilder From(string from)
         {
             if (!_fromTables.Any() && !Regex.IsMatch(from, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
@@ -95,75 +106,101 @@ namespace DapperQueryBuilder
             _fromTables.Add(from);
             return this;
         }
+        //TODO: create options with InnerJoin, LeftJoin, RightJoin, FullJoin, CrossJoin? Create overloads with table alias?
 
+
+
+        /// <summary>
+        /// Adds a new condition to where clauses.
+        /// </summary>
+        public IWhereBuilder Where(Filter filter)
+        {
+            // Check for name clashes in parameters, we may have to rename parameters
+            string filterSql = filter.Sql;
+            foreach (var statementParameterName in filter.Parameters.ParameterNames)
+                base.AddParameter(statementParameterName, filter.Parameters.Get<object>(statementParameterName), ref filterSql);
+            filter.Sql = filterSql;
+            _filters.Add(filter);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a new condition to where clauses. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
         public IWhereBuilder Where(FormattableString filter)
         {
-            _filters.Add(new Filter(filter));
-            _autoNamedParametersCount++;
-            return this;
-        }
-        public IWhereBuilder Where(RawString filter)
-        {
-            _filters.Add(new Filter(filter));
-            _autoNamedParametersCount++;
-            return this;
+            return Where(new Filter(filter));
         }
 
+        ///// <summary>
+        ///// Adds a new condition to where clauses.
+        ///// </summary>
+        //public IWhereBuilder Where(RawString filter) // If I accept RawStrings (implicitly converted from strings) someone may pass args like $"{param1}" + $"{param1}", and that would be translated into a RawString and would NOT be injection-safe!
+        //{
+        //    return Where(new Filter(filter));
+        //}
+
+        /// <summary>
+        /// Adds a new column to orderby clauses.
+        /// </summary>
         public IOrderByBuilder OrderBy(string orderBy)
         {
             _orderBy.Add(orderBy);
             return this;
         }
 
+        /// <summary>
+        /// Adds a new column to groupby clauses.
+        /// </summary>
         public IGroupByBuilder GroupBy(string groupBy)
         {
             _groupBy.Add(groupBy);
             return this;
         }
 
+        /// <summary>
+        /// Adds a new condition to having clauses.
+        /// </summary>
         public IGroupByHavingBuilder Having(string having)
         {
             _having.Add(having);
             return this;
         }
 
+        /// <summary>
+        /// Adds offset and rowcount clauses
+        /// </summary>
         public ICompleteQuery Limit(int offset, int rowCount)
         {
             _offset = offset;
             _rowCount = rowCount;
             return this;
         }
-        public void AddDynamicParams(object param)
-        {
-            throw new NotImplementedException();
-        }
 
 
-        public string Sql
+        /// <summary>
+        /// <inheritdoc />
+        /// </summary>
+        public override string Sql
         {
             get
             {
-                if (_sql != null && _sql.Length > 0)
-                    return _sql.ToString();
+                //if (sql != null && sql.Length > 0)
+                //    return sql.ToString();
 
-                if (_sql == null)
-                {
-                    _sql = new StringBuilder();
-                    Parameters = new DynamicParameters();
-                    _autoNamedParametersCount = 0;
-                }
+                StringBuilder finalSql = new StringBuilder();
 
-                // If RawSql is provided, we assume it contains both SELECT and FROMs
-                if (!string.IsNullOrEmpty(RawSql))
-                    _sql.Append(RawSql);
+                // If Query Template is provided, we assume it contains both SELECT and FROMs
+                if (_queryTemplate != null)
+                    finalSql.Append(_queryTemplate);
+                else if (_selectColumns.Any())
+                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}{string.Join(", ", _selectColumns)}");
+                else 
+                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}*");
 
-                if (string.IsNullOrEmpty(RawSql) && _selectColumns.Any())
-                    _sql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}{string.Join(", ", _selectColumns)}");
-                else if (string.IsNullOrEmpty(RawSql))
-                    _sql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}*");
-
-                if (string.IsNullOrEmpty(RawSql) && _fromTables.Any())
-                    _sql.AppendLine($"{string.Join(Environment.NewLine, _fromTables)}"); //TODO: inner join and left/outer join shortcuts?
+                if (_queryTemplate == null && _fromTables.Any())
+                    finalSql.AppendLine($"{string.Join(Environment.NewLine, _fromTables)}"); //TODO: inner join and left/outer join shortcuts?
 
                 if (_filters.Any())
                 {
@@ -173,48 +210,36 @@ namespace DapperQueryBuilder
                         if (_filters.IndexOf(filter) > 0)
                             filtersString.Append(" AND ");
                         string filterSql = filter.Sql;
-                        foreach(var parameterName in filter.Parameters.ParameterNames)
-                        {
-                            string newParameterName = parameterName;
-                            if (Parameters.ParameterNames.Contains(parameterName) || Regex.IsMatch(parameterName, "p(\\d)*"))
-                            {
-                                newParameterName = "p" + _autoNamedParametersCount.ToString();
-                                filterSql = filterSql.Replace("@" + parameterName, "@" + newParameterName);
-                                _autoNamedParametersCount++;
-                            }
-                            filtersString.Append(filterSql);
-                            Parameters.Add(newParameterName, filter.Parameters.Get<object>(parameterName));
-                        }
-
+                        filtersString.Append(filterSql);
                     }
-                    if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("/**where**/"))
-                        _sql.Replace("/**where**/", "WHERE " + filtersString.ToString());
-                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("{where}"))
-                        _sql.Replace("{where}", "WHERE " + filtersString.ToString());
-                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("/**filters**/"))
-                        _sql.Replace("/**filters**/", filtersString.ToString());
-                    else if (!string.IsNullOrEmpty(RawSql) && RawSql.Contains("{filters}"))
-                        _sql.Replace("{filters}", filtersString.ToString());
+                    if (_queryTemplate != null && _queryTemplate.Contains("/**where**/"))
+                        finalSql.Replace("/**where**/", "WHERE " + filtersString.ToString());
+                    else if (_queryTemplate != null && _queryTemplate.Contains("{where}"))
+                        finalSql.Replace("{where}", "WHERE " + filtersString.ToString());
+                    else if (_queryTemplate != null && _queryTemplate.Contains("/**filters**/"))
+                        finalSql.Replace("/**filters**/", filtersString.ToString());
+                    else if (_queryTemplate != null && _queryTemplate.Contains("{filters}"))
+                        finalSql.Replace("{filters}", filtersString.ToString());
                     else
                     {
-                        //TODO: if RawSql was provided, check if RawSql ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
+                        //TODO: if Query Template was provided, check if Template ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
                         // else...
-                        //TODO: if RawSql was provided, check if RawSql ends has WHERE with real conditions... set hasWhereConditions=true 
+                        //TODO: if Query Template was provided, check if Template ends has WHERE with real conditions... set hasWhereConditions=true 
                         // else...
-                        _sql.AppendLine("WHERE " + filtersString.ToString());
+                        finalSql.AppendLine("WHERE " + filtersString.ToString());
                     }
 
                 }
                 if (_orderBy.Any())
-                    _sql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
+                    finalSql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
                 if (_groupBy.Any())
-                    _sql.AppendLine($"GROUP BY {string.Join(", ", _groupBy)}");
+                    finalSql.AppendLine($"GROUP BY {string.Join(", ", _groupBy)}");
                 if (_having.Any())
-                    _sql.AppendLine($"HAVING {string.Join(" AND ", _having)}");
+                    finalSql.AppendLine($"HAVING {string.Join(" AND ", _having)}");
                 if (_rowCount != null)
-                    _sql.AppendLine($"OFFSET {_offset ?? 0} ROWS FETCH NEXT {_rowCount} ROWS ONLY"); // TODO: PostgreSQL? "LIMIT row_count OFFSET offset"
+                    finalSql.AppendLine($"OFFSET {_offset ?? 0} ROWS FETCH NEXT {_rowCount} ROWS ONLY"); // TODO: PostgreSQL? "LIMIT row_count OFFSET offset"
 
-                return _sql.ToString();
+                return finalSql.ToString();
             }
         }
 

@@ -4,9 +4,28 @@ using System.Text;
 
 namespace DapperQueryBuilder
 {
-    public interface ISelectDistinctBuilder
+    /// <summary>
+    /// QueryBuilder which is preparing a SELECT DISTINCT statement
+    /// </summary>
+    public interface ISelectDistinctBuilder : ICommandBuilder
     {
+        /// <summary>
+        /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
+        /// </summary>
         ISelectDistinctBuilder SelectDistinct(string select);
+
+        /// <summary>
+        /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
+        /// </summary>
+        ISelectDistinctBuilder SelectDistinct(string select, params string[] moreColumns);
+
+
+        /// <summary>
+        /// Adds a new table to from clauses. <br />
+        /// "FROM" word is optional. <br />
+        /// You can add an alias after table name. <br />
+        /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
+        /// </summary>
         IFromBuilder From(string from);
     }
 }
