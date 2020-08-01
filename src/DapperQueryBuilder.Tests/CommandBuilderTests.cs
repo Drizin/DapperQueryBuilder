@@ -69,5 +69,17 @@ namespace DapperQueryBuilder.Tests
             int returnValue = q.Parameters.Get<int>("ReturnValue");
         }
 
+        [Test]
+        public void TestCRUD()
+        {
+            string id = "123";
+            int affected = cn.CommandBuilder($@"UPDATE [HumanResources].[Employee] SET")
+                .Append($" NationalIDNumber={id}")
+                .Append($" WHERE BusinessEntityID={businessEntityID}")
+                .Execute();
+        }
+
+
+
     }
 }

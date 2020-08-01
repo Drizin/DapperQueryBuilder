@@ -8,34 +8,7 @@ By using Fluent API we can easily add dynamic filters to queries (or even dynami
 
 # What is the purpose of this library?
 
-**Dapper concatenating strings (BAD!) is vulnerable to SQL injection:**
-
-```cs
-var products = cn.Query<Product>(
-	"SELECT * FROM [Production].[Product]" + 
-	" WHERE [Name] LIKE '%" + productName + "%'");
-```
-
-**Dapper using interpolated strings is also vulnerable to SQL injection:**
-```cs
-var products = cn.Query<Product>($@"
-	SELECT * FROM [Production].[Product]
-	WHERE [Name] LIKE '%{productName}%'");
-```
-
-**Dapper passing parameters:**
-
-This is safe and somehow concise, as long as you know beforehand all parameters you'll pass:
-```cs
-// Dapper passing parameters is safe and somehow concise, 
-// as long as you know beforehand all parameters you'll pass
-var products = cn.Query<Product>(@"
-	SELECT * FROM [Production].[Product]
-    WHERE [Name] LIKE @productName AND [CategoryId]=@categoryId", 
-	new { productName = "%" + productName + "%", categoryId = 1 });
-```
-
-**Dapper building dynamic filters can get really cumbersome and ugly:**
+**Building dynamic filters in Dapper can get really cumbersome and ugly:**
 ```cs
 var parms = new DynamicParameters();
 List<string> filters = new List<string>();
@@ -63,10 +36,12 @@ var query = cn.QueryBuilder(@"
 	.Where($"[Name] LIKE {productName}")
 	.Where($"[CategoryId] = {categoryId}");
 
-// All filters added above will be automatically added to DynamicParameters
-// and will replace the /**where**/ keyword
 var products = query.Query<Product>();	
 ```
+
+All filters added using the Fluent-API (method chaining) will be automatically 
+added to DynamicParameters and will replace the `/**where**/` keyword.
+
 
 # Documentation / Examples
 
@@ -104,7 +79,7 @@ var products = q.Query<Product>();
 ```cs
 // Or you can use chained-methods that help to build dynamic queries
 var q2 = cn.QueryBuilder()
-	.Select("ProductId")
+	.Select("ProductId") // you could also use nameof(pocoProperty)
 	.Select("Name")
 	.Select("ListPrice")
 	.Select("Weight")
@@ -112,8 +87,7 @@ var q2 = cn.QueryBuilder()
 	.Where($"[ListPrice] <= {maxPrice}")
 	.Where($"[Weight] <= {maxWeight}")
 	.Where($"[Name] LIKE {search}")
-	.OrderBy("ProductId")
-	;
+	.OrderBy("ProductId");
 	
 var products = q2.Query<Product>();	
 ```
@@ -132,6 +106,7 @@ ORDER BY ProductId
 
 ```cs
 var categories = new string[] { "Components", "Clothing", "Acessories" };
+
 var q = cn.QueryBuilder()
 	.SelectDistinct("c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
 	.From("[Production].[Product] p")
