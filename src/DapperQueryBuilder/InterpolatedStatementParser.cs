@@ -80,5 +80,20 @@ namespace DapperQueryBuilder
             _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
         }
         #endregion
+
+        /// <summary>
+        /// Merges parameters from this query/statement into a CommandBuilder. <br />
+        /// Checks for name clashes, and will rename parameters (in CommandBuilder) if necessary. <br />
+        /// If some parameter is renamed the return string will be the original Sql statement replaced by new parameter names, else returns null.<br />
+        /// This method does NOT append Parser SQL to CommandBuilder SQL (you may want to save this SQL statement elsewhere)
+        /// </summary>
+        public string MergeParameters(CommandBuilder commandBuilder)
+        {
+            string newSql = commandBuilder.MergeParameters(this.Parameters, this.Sql);
+            //if (newSql != null)
+            //    this.Sql = newSql;
+            return newSql;
+        }
+
     }
 }

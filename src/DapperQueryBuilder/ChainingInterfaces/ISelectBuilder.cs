@@ -12,17 +12,12 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one column to the select clauses
         /// </summary>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        ISelectBuilder Select(string column);
+        ISelectBuilder Select(FormattableString column);
 
         /// <summary>
         /// Adds one or more columns to the select clauses
         /// </summary>
-        /// <param name="column"></param>
-        /// <param name="moreColumns"></param>
-        /// <returns></returns>
-        ISelectBuilder Select(string column, params string[] moreColumns);
+        ISelectBuilder Select(params FormattableString[] moreColumns);
 
         /// <summary>
         /// Adds a new table to from clauses. <br />
@@ -30,6 +25,6 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        IFromBuilder From(string from);
+        IFromBuilder From(FormattableString from);
     }
 }

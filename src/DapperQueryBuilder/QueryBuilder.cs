@@ -46,50 +46,54 @@ namespace DapperQueryBuilder
         /// </param>
         public QueryBuilder(IDbConnection cnn, FormattableString query) : base(cnn)
         {
-            var parser = new InterpolatedStatementParser(query);
-            string querySql = parser.Sql;
-            foreach (var statementParameterName in parser.Parameters.ParameterNames)
-                base.AddParameter(statementParameterName, parser.Parameters.Get<object>(statementParameterName), ref querySql);
-            _queryTemplate = querySql;
+            var parsedStatement = new InterpolatedStatementParser(query);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _queryTemplate = sql;
         }
         #endregion
 
         /// <summary>
         /// Adds one column to the select clauses
         /// </summary>
-        public ISelectBuilder Select(string column)
+        public ISelectBuilder Select(FormattableString column)
         {
-            return Select(column, new string[] { });
+            var parsedStatement = new InterpolatedStatementParser(column);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _selectColumns.Add(sql);
+            return this;
         }
 
         /// <summary>
         /// Adds one or more columns to the select clauses
         /// </summary>
-        public ISelectBuilder Select(string column, params string[] moreColumns)
+        public ISelectBuilder Select(params FormattableString[] moreColumns)
         {
-            _selectColumns.Add(column);
+            //Select(column);
             foreach (var col in moreColumns)
-                _selectColumns.Add(col);
+                Select(col);
             return this;
         }
 
         /// <summary>
         /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        public ISelectDistinctBuilder SelectDistinct(string select)
+        public ISelectDistinctBuilder SelectDistinct(FormattableString select)
         {
-            return SelectDistinct(select, new string[] { });
+            _isSelectDistinct = true;
+            var parsedStatement = new InterpolatedStatementParser(select);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _selectColumns.Add(sql);
+            return this;
         }
 
         /// <summary>
         /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        public ISelectDistinctBuilder SelectDistinct(string select, params string[] moreColumns)
+        public ISelectDistinctBuilder SelectDistinct(params FormattableString[] moreColumns)
         {
-            _isSelectDistinct = true;
-            _selectColumns.Add(select);
+            //SelectDistinct(select);
             foreach (var col in moreColumns)
-                _selectColumns.Add(col);
+                SelectDistinct(col);
             return this;
         }
 
@@ -99,11 +103,13 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        public IFromBuilder From(string from)
+        public IFromBuilder From(FormattableString from)
         {
-            if (!_fromTables.Any() && !Regex.IsMatch(from, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
-                from = "FROM " + from;
-            _fromTables.Add(from);
+            var parsedStatement = new InterpolatedStatementParser(from);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            if (!_fromTables.Any() && !Regex.IsMatch(sql, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
+                sql = "FROM " + sql;
+            _fromTables.Add(sql);
             return this;
         }
         //TODO: create options with InnerJoin, LeftJoin, RightJoin, FullJoin, CrossJoin? Create overloads with table alias?
@@ -116,13 +122,29 @@ namespace DapperQueryBuilder
         public IWhereBuilder Where(Filter filter)
         {
             // Check for name clashes in parameters, we may have to rename parameters
-            string filterSql = filter.Sql;
-            foreach (var statementParameterName in filter.Parameters.ParameterNames)
-                base.AddParameter(statementParameterName, filter.Parameters.Get<object>(statementParameterName), ref filterSql);
-            filter.Sql = filterSql;
+            string sql = MergeParameters(filter.Parameters, filter.Sql) ?? filter.Sql;
+            filter.Sql = sql;
+            filter.Parameters = null; // filter.Parameters now may not match the filter.Sql names! since we already merged parameters, just discard original dictionary
             _filters.Add(filter);
             return this;
         }
+
+        /// <summary>
+        /// Adds a new condition to where clauses.
+        /// </summary>
+        public IWhereBuilder Where(Filters filters)
+        {
+            foreach (var filter in filters)
+            {
+                // Check for name clashes in parameters, we may have to rename parameters
+                string sql = MergeParameters(filter.Parameters, filter.Sql) ?? filter.Sql;
+                filter.Sql = sql;
+                filter.Parameters = null; // filter.Parameters now may not match the filter.Sql names! since we already merged parameters, just discard original dictionary
+                _filters.Add(filter);
+            }
+            return this;
+        }
+
 
         /// <summary>
         /// Adds a new condition to where clauses. <br />
@@ -144,27 +166,33 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new column to orderby clauses.
         /// </summary>
-        public IOrderByBuilder OrderBy(string orderBy)
+        public IOrderByBuilder OrderBy(FormattableString orderBy)
         {
-            _orderBy.Add(orderBy);
+            var parsedStatement = new InterpolatedStatementParser(orderBy);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _orderBy.Add(sql);
             return this;
         }
 
         /// <summary>
         /// Adds a new column to groupby clauses.
         /// </summary>
-        public IGroupByBuilder GroupBy(string groupBy)
+        public IGroupByBuilder GroupBy(FormattableString groupBy)
         {
-            _groupBy.Add(groupBy);
+            var parsedStatement = new InterpolatedStatementParser(groupBy);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _groupBy.Add(sql);
             return this;
         }
 
         /// <summary>
         /// Adds a new condition to having clauses.
         /// </summary>
-        public IGroupByHavingBuilder Having(string having)
+        public IGroupByHavingBuilder Having(FormattableString having)
         {
-            _having.Add(having);
+            var parsedStatement = new InterpolatedStatementParser(having);
+            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            _having.Add(sql);
             return this;
         }
 

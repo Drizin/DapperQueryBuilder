@@ -46,15 +46,15 @@ ORDER BY ProductId
             string search = "%Mountain%";
 
             var q = cn.QueryBuilder()
-                .Select("ProductId")
-                .Select("Name")
-                .Select("ListPrice")
-                .Select("Weight")
-                .From("[Production].[Product]")
+                .Select($"ProductId")
+                .Select($"Name")
+                .Select($"ListPrice")
+                .Select($"Weight")
+                .From($"[Production].[Product]")
                 .Where($"[ListPrice] <= {maxPrice}")
                 .Where($"[Weight] <= {maxWeight}")
                 .Where($"[Name] LIKE {search}")
-                .OrderBy("ProductId")
+                .OrderBy($"ProductId")
                 ;
 
             Assert.AreEqual(expected, q.Sql);
@@ -111,10 +111,10 @@ ORDER BY ProductId
         {
             var categories = new string[] { "Components", "Clothing", "Acessories" };
             var q = cn.QueryBuilder()
-                .SelectDistinct("c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
-                .From("[Production].[Product] p")
-                .From("INNER JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
-                .From("INNER JOIN [Production].[ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
+                .SelectDistinct($"c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
+                .From($"[Production].[Product] p")
+                .From($"INNER JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
+                .From($"INNER JOIN [Production].[ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
                 .Where($"c.[Name] IN {categories}");
             var prods = q.Query<ProductCategories>();
         }

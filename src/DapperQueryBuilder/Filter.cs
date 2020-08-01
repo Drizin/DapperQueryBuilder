@@ -19,14 +19,15 @@ namespace DapperQueryBuilder
         #region ctor
         public Filter(FormattableString filter)
         {
-            var parser = new InterpolatedStatementParser(filter);
-            Sql = parser.Sql;
-            Parameters = parser.Parameters;
+            var parsedStatement = new InterpolatedStatementParser(filter);
+            Sql = parsedStatement.Sql;
+            Parameters = parsedStatement.Parameters;
             _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
         }
         public Filter(RawString filter)
         {
             Sql = filter;
+            Parameters = new DynamicParameters();
         }
         
         #endregion

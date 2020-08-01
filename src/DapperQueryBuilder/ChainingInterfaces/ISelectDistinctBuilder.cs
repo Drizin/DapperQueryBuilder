@@ -12,12 +12,12 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        ISelectDistinctBuilder SelectDistinct(string select);
+        ISelectDistinctBuilder SelectDistinct(FormattableString select);
 
         /// <summary>
         /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        ISelectDistinctBuilder SelectDistinct(string select, params string[] moreColumns);
+        ISelectDistinctBuilder SelectDistinct(params FormattableString[] moreColumns);
 
 
         /// <summary>
@@ -26,6 +26,6 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        IFromBuilder From(string from);
+        IFromBuilder From(FormattableString from);
     }
 }

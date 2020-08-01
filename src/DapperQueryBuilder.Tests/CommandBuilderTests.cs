@@ -29,6 +29,35 @@ namespace DapperQueryBuilder.Tests
         string maritalStatus = "S"; // single
         string gender = "M";
 
+        public class Product
+        {
+            public int ProductId { get; set; }
+            public string Name { get; set; }
+        }
+
+        [Test]
+        public void TestAppends()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .CommandBuilder($@"SELECT * FROM [Production].[Product]")
+                .AppendLine($"WHERE")
+                .AppendLine($"[Name] LIKE {productName}")
+                .AppendLine($"AND [ProductSubcategoryID] = {subCategoryId}")
+                .AppendLine($"ORDER BY [ProductId]");
+            Assert.AreEqual(
+@"SELECT * FROM [Production].[Product]
+WHERE
+[Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1
+ORDER BY [ProductId]
+", query.Sql);
+
+            var products = query.Query<Product>();
+        }
+
         [Test]
         public void TestStoredProcedure()
         {

@@ -12,7 +12,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(string column);
+        IOrderByBuilder OrderBy(FormattableString column);
 
         /// <summary>
         /// Adds offset and rowcount clauses

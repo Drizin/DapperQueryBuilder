@@ -15,11 +15,11 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="having"></param>
         /// <returns></returns>
-        IGroupByHavingBuilder Having(string having);
+        IGroupByHavingBuilder Having(FormattableString having);
 
         /// <summary>
         /// Adds a new condition to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(string orderBy);
+        IOrderByBuilder OrderBy(FormattableString orderBy);
     }
 }

@@ -15,13 +15,22 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        IFromBuilder From(string from);
+        IFromBuilder From(FormattableString from);
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        /// <param name="filter"></param>
-        /// <returns></returns>
+        IWhereBuilder Where(Filter filter);
+
+        /// <summary>
+        /// Adds a new condition to where clauses.
+        /// </summary>
+        IWhereBuilder Where(Filters filter);
+
+        /// <summary>
+        /// Adds a new condition to where clauses. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
         IWhereBuilder Where(FormattableString filter);
 
         /// <summary>
@@ -32,6 +41,6 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new column to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(string orderBy);
+        IOrderByBuilder OrderBy(FormattableString orderBy);
     }
 }

@@ -14,24 +14,21 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="column"></param>
         /// <returns></returns>
-        ISelectBuilder Select(string column);
+        ISelectBuilder Select(FormattableString column);
 
         /// <summary>
         /// Adds one or more columns to the select clauses
         /// </summary>
-        /// <param name="column"></param>
-        /// <param name="moreColumns"></param>
-        /// <returns></returns>
-        ISelectBuilder Select(string column, params string[] moreColumns);
+        ISelectBuilder Select(params FormattableString[] moreColumns);
 
         /// <summary>
         /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        ISelectDistinctBuilder SelectDistinct(string select);
+        ISelectDistinctBuilder SelectDistinct(FormattableString select);
 
         /// <summary>
         /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        ISelectDistinctBuilder SelectDistinct(string select, params string[] moreColumns);
+        ISelectDistinctBuilder SelectDistinct(params FormattableString[] moreColumns);
     }
 }

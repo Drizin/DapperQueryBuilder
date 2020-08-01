@@ -9,8 +9,8 @@ namespace DapperQueryBuilder
     /// </summary>
     public interface IGroupByBuilder : ICommandBuilder, ICompleteQuery
     {
-        IGroupByBuilder GroupBy(string groupBy);
-        IGroupByHavingBuilder Having(string having);
-        IOrderByBuilder OrderBy(string orderBy);
+        IGroupByBuilder GroupBy(FormattableString groupBy);
+        IGroupByHavingBuilder Having(FormattableString having);
+        IOrderByBuilder OrderBy(FormattableString orderBy);
     }
 }

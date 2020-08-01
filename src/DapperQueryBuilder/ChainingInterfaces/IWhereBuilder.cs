@@ -10,6 +10,16 @@ namespace DapperQueryBuilder
     public interface IWhereBuilder : ICommandBuilder, ICompleteQuery
     {
         /// <summary>
+        /// Adds a new condition to where clauses.
+        /// </summary>
+        IWhereBuilder Where(Filter filter);
+
+        /// <summary>
+        /// Adds a new condition to where clauses.
+        /// </summary>
+        IWhereBuilder Where(Filters filter);
+
+        /// <summary>
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
@@ -23,11 +33,11 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to groupby clauses.
         /// </summary>
-        IGroupByBuilder GroupBy(string groupBy);
+        IGroupByBuilder GroupBy(FormattableString groupBy);
 
         /// <summary>
         /// Adds a new condition to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(string orderBy);
+        IOrderByBuilder OrderBy(FormattableString orderBy);
     }
 }
