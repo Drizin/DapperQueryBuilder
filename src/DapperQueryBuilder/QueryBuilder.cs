@@ -42,7 +42,7 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="cnn"></param>
         /// <param name="query">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
-        /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
+        /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "AND filters" (without where) (if any filter is defined).
         /// </param>
         public QueryBuilder(IDbConnection cnn, FormattableString query) : base(cnn)
         {
@@ -232,9 +232,9 @@ namespace DapperQueryBuilder
                     else if (_queryTemplate != null && _queryTemplate.Contains("{where}"))
                         finalSql.Replace("{where}", "WHERE " + filtersString.ToString());
                     else if (_queryTemplate != null && _queryTemplate.Contains("/**filters**/"))
-                        finalSql.Replace("/**filters**/", filtersString.ToString());
+                        finalSql.Replace("/**filters**/", "AND " + filtersString.ToString());
                     else if (_queryTemplate != null && _queryTemplate.Contains("{filters}"))
-                        finalSql.Replace("{filters}", filtersString.ToString());
+                        finalSql.Replace("{filters}", "AND " + filtersString.ToString());
                     else
                     {
                         //TODO: if Query Template was provided, check if Template ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
