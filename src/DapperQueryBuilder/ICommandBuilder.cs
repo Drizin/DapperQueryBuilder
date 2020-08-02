@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,7 +17,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Command
         /// </summary>
-        Dapper.DynamicParameters Parameters { get; }
+        DynamicParameters Parameters { get; }
 
     }
 }

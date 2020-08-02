@@ -47,8 +47,8 @@ namespace DapperQueryBuilder
         public QueryBuilder(IDbConnection cnn, FormattableString query) : base(cnn)
         {
             var parsedStatement = new InterpolatedStatementParser(query);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _queryTemplate = sql;
+            parsedStatement.MergeParameters(this.Parameters);
+            _queryTemplate = parsedStatement.Sql;
         }
         #endregion
 
@@ -58,8 +58,8 @@ namespace DapperQueryBuilder
         public ISelectBuilder Select(FormattableString column)
         {
             var parsedStatement = new InterpolatedStatementParser(column);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _selectColumns.Add(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _selectColumns.Add(parsedStatement.Sql);
             return this;
         }
 
@@ -81,8 +81,8 @@ namespace DapperQueryBuilder
         {
             _isSelectDistinct = true;
             var parsedStatement = new InterpolatedStatementParser(select);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _selectColumns.Add(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _selectColumns.Add(parsedStatement.Sql);
             return this;
         }
 
@@ -106,7 +106,8 @@ namespace DapperQueryBuilder
         public IFromBuilder From(FormattableString from)
         {
             var parsedStatement = new InterpolatedStatementParser(from);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
+            parsedStatement.MergeParameters(this.Parameters);
+            string sql = parsedStatement.Sql;
             if (!_fromTables.Any() && !Regex.IsMatch(sql, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
                 sql = "FROM " + sql;
             _fromTables.Add(sql);
@@ -121,10 +122,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public IWhereBuilder Where(Filter filter)
         {
-            // Check for name clashes in parameters, we may have to rename parameters
-            string sql = MergeParameters(filter.Parameters, filter.Sql) ?? filter.Sql;
-            filter.Sql = sql;
-            filter.Parameters = null; // filter.Parameters now may not match the filter.Sql names! since we already merged parameters, just discard original dictionary
+            filter.MergeParameters(this.Parameters);
             _filters.Add(filter);
             return this;
         }
@@ -134,14 +132,8 @@ namespace DapperQueryBuilder
         /// </summary>
         public IWhereBuilder Where(Filters filters)
         {
-            foreach (var filter in filters)
-            {
-                // Check for name clashes in parameters, we may have to rename parameters
-                string sql = MergeParameters(filter.Parameters, filter.Sql) ?? filter.Sql;
-                filter.Sql = sql;
-                filter.Parameters = null; // filter.Parameters now may not match the filter.Sql names! since we already merged parameters, just discard original dictionary
-                _filters.Add(filter);
-            }
+            filters.MergeParameters(this.Parameters);
+            _filters.Add(filters);
             return this;
         }
 
@@ -169,8 +161,8 @@ namespace DapperQueryBuilder
         public IOrderByBuilder OrderBy(FormattableString orderBy)
         {
             var parsedStatement = new InterpolatedStatementParser(orderBy);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _orderBy.Add(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _orderBy.Add(parsedStatement.Sql);
             return this;
         }
 
@@ -180,8 +172,8 @@ namespace DapperQueryBuilder
         public IGroupByBuilder GroupBy(FormattableString groupBy)
         {
             var parsedStatement = new InterpolatedStatementParser(groupBy);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _groupBy.Add(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _groupBy.Add(parsedStatement.Sql);
             return this;
         }
 
@@ -191,8 +183,8 @@ namespace DapperQueryBuilder
         public IGroupByHavingBuilder Having(FormattableString having)
         {
             var parsedStatement = new InterpolatedStatementParser(having);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _having.Add(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _having.Add(parsedStatement.Sql);
             return this;
         }
 
@@ -232,14 +224,9 @@ namespace DapperQueryBuilder
 
                 if (_filters.Any())
                 {
-                    StringBuilder filtersString = new StringBuilder(); 
-                    foreach (var filter in _filters)
-                    {
-                        if (_filters.IndexOf(filter) > 0)
-                            filtersString.Append(" AND ");
-                        string filterSql = filter.Sql;
-                        filtersString.Append(filterSql);
-                    }
+                    StringBuilder filtersString = new StringBuilder();
+                    _filters.WriteFilter(filtersString); // this writes all filters, going recursively if there are nested filters
+
                     if (_queryTemplate != null && _queryTemplate.Contains("/**where**/"))
                         finalSql.Replace("/**where**/", "WHERE " + filtersString.ToString());
                     else if (_queryTemplate != null && _queryTemplate.Contains("{where}"))

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Parses an interpolated-string SQL statement into a injection-safe statement (with parameters as @p0, @p1, etc) and a dictionary of parameter values.
     /// </summary>
-    [DebuggerDisplay("{Sql} ({_parametersStr})")]
+    [DebuggerDisplay("{Sql} ({_parametersStr,nq})")]
     public class InterpolatedStatementParser
     {
         #region Members
@@ -22,7 +23,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Dictionary of Dapper parameters
         /// </summary>
-        public Dapper.DynamicParameters Parameters { get; set; }
+        public DynamicParameters Parameters { get; set; }
 
 
         private string _parametersStr;
@@ -48,7 +49,7 @@ namespace DapperQueryBuilder
         }
         private InterpolatedStatementParser(string format, params object[] arguments)
         {
-            Parameters = new Dapper.DynamicParameters();
+            Parameters = new DynamicParameters();
 
             StringBuilder sb = new StringBuilder();
             if (string.IsNullOrEmpty(format))
@@ -77,22 +78,27 @@ namespace DapperQueryBuilder
             string lastPart = format.Substring(lastPos).Replace("{{", "{").Replace("}}", "}");
             sb.Append(lastPart);
             Sql = sb.ToString();
-            _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
+            _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
         }
         #endregion
 
         /// <summary>
         /// Merges parameters from this query/statement into a CommandBuilder. <br />
         /// Checks for name clashes, and will rename parameters (in CommandBuilder) if necessary. <br />
-        /// If some parameter is renamed the return string will be the original Sql statement replaced by new parameter names, else returns null.<br />
+        /// If some parameter is renamed the underlying Sql statement will have the new parameter names replaced by their new names.<br />
         /// This method does NOT append Parser SQL to CommandBuilder SQL (you may want to save this SQL statement elsewhere)
         /// </summary>
-        public string MergeParameters(CommandBuilder commandBuilder)
+        public void MergeParameters(DynamicParameters target)
         {
-            string newSql = commandBuilder.MergeParameters(this.Parameters, this.Sql);
-            //if (newSql != null)
-            //    this.Sql = newSql;
-            return newSql;
+            //TODO: write a separate class that implements IDynamicParameters
+            string newSql = target.MergeParameters(Parameters, Sql);
+            if (newSql != null)
+            {
+                Sql = newSql;
+                _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
+                // filter parameters in Sql were renamed and won't match the previous passed filters - discard original parameters to avoid reusing wrong values
+                Parameters = null;
+            }
         }
 
     }

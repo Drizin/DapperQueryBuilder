@@ -12,12 +12,12 @@ namespace DapperQueryBuilder
     /// <summary>
     /// CommandBuilder
     /// </summary>
-    [DebuggerDisplay("{Sql} ({_parametersStr})")]
+    [DebuggerDisplay("{Sql} ({_parametersStr,nq})")]
     public class CommandBuilder : ICommandBuilder, ICompleteQuery
     {
         #region Members
         private readonly IDbConnection _cnn;
-        private readonly Dapper.DynamicParameters _parameters;
+        private readonly DynamicParameters _parameters;
         private string _parametersStr;
 
         private readonly StringBuilder _command;
@@ -45,9 +45,9 @@ namespace DapperQueryBuilder
         public CommandBuilder(IDbConnection cnn, FormattableString command) : this(cnn)
         {
             var parsedStatement = new InterpolatedStatementParser(command);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            if (!string.IsNullOrEmpty(sql)) // if it's empty command we don't add a linebreak
-                _command.AppendLine(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            if (!string.IsNullOrEmpty(parsedStatement.Sql)) // if it's empty command we don't add a linebreak
+                _command.AppendLine(parsedStatement.Sql);
         }
         #endregion
 
@@ -58,7 +58,7 @@ namespace DapperQueryBuilder
         public CommandBuilder AddParameter(string parameterName, object parameterValue = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
         {
             _parameters.Add(parameterName, parameterValue, dbType, direction, size, precision, scale);
-            _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
+            _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
             return this;
         }
 
@@ -70,7 +70,7 @@ namespace DapperQueryBuilder
         public void AddDynamicParams(object param)
         {
             _parameters.AddDynamicParams(param);
-            _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => n + "=" + Convert.ToString(Parameters.Get<dynamic>(n))));
+            _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
         }
 
         /// <summary>
@@ -80,37 +80,9 @@ namespace DapperQueryBuilder
         /// </summary>
         protected string MergeParameter(string parameterName, object parameterValue)
         {
-            string newParameterName = parameterName;
-            if (_parameters.ParameterNames.Contains(parameterName) || Regex.IsMatch(parameterName, "p(\\d)*"))
-            {
-                newParameterName = "p" + _autoNamedParametersCount.ToString();
-                _autoNamedParametersCount++;
-            }
-            AddParameter(newParameterName, parameterValue);
-            if (newParameterName != parameterName)
-                return newParameterName;
-            return null;
+            return _parameters.MergeParameter(parameterName, parameterValue);
         }
 
-        /// <summary>
-        /// Merges multiple parameters into this CommandBuilder. <br />
-        /// Checks for name clashes, and will rename parameters (in the CommandBuilder only) if necessary. <br />
-        /// If some parameter is renamed the returned Sql statement will containg the original sql replaced with new names, else (if nothing changed) returns null. <br />
-        /// This method does NOT append Parser SQL to CommandBuilder SQL (you may want to save this SQL statement elsewhere)
-        /// </summary>
-        public string MergeParameters(DynamicParameters parameters, string sql)
-        {
-            string newSql = sql;
-            foreach (var parameterName in parameters.ParameterNames)
-            {
-                string newParameterName = MergeParameter(parameterName, parameters.Get<object>(parameterName));
-                if (newParameterName != null)
-                    newSql = newSql.Replace("@" + parameterName, "@" + newParameterName);
-            }
-            if (newSql != sql)
-                return newSql;
-            return null;
-        }
 
         ///// <summary>
         ///// Merges parameters from the query/statement into this CommandBuilder. <br />
@@ -135,8 +107,8 @@ namespace DapperQueryBuilder
         public CommandBuilder Append(FormattableString statement)
         {
             var parsedStatement = new InterpolatedStatementParser(statement);
-            string sql = parsedStatement.MergeParameters(this) ?? parsedStatement.Sql;
-            _command.Append(sql);
+            parsedStatement.MergeParameters(this.Parameters);
+            _command.Append(parsedStatement.Sql);
             return this;
         }
 
@@ -161,7 +133,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Command
         /// </summary>
-        public virtual Dapper.DynamicParameters Parameters => _parameters;
+        public virtual DynamicParameters Parameters => _parameters;
 
         #region Query<T> - Invoke Dapper
 

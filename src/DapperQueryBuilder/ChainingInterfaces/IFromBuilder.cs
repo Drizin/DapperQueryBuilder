@@ -18,7 +18,7 @@ namespace DapperQueryBuilder
         IFromBuilder From(FormattableString from);
 
         /// <summary>
-        /// Adds a new condition to where clauses.
+        /// Adds a new group of conditions to where clauses.
         /// </summary>
         IWhereBuilder Where(Filter filter);
 

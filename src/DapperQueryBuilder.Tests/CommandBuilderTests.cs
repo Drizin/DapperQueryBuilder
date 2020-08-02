@@ -52,8 +52,7 @@ namespace DapperQueryBuilder.Tests
 WHERE
 [Name] LIKE @p0
 AND [ProductSubcategoryID] = @p1
-ORDER BY [ProductId]
-", query.Sql);
+ORDER BY [ProductId]", query.Sql);
 
             var products = query.Query<Product>();
         }
