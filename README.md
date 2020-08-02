@@ -239,7 +239,7 @@ So, basically, instead of starting with a full query and just appending new filt
 
 ```cs
 var q = cn.QueryBuilder()
-	.Select($"ProductId") // you could also use nameof(Product.ProductId) to use "find references" and refactor(rename)
+	.Select($"ProductId")
 	.Select($"Name")
 	.Select($"ListPrice")
 	.Select($"Weight")
@@ -264,7 +264,7 @@ Or more elaborated:
 
 ```cs
 var q = cn.QueryBuilder()
-	.SelectDistinct($"ProductId, Name, {nameof(Product.ListPrice)}, Weight")
+	.SelectDistinct($"ProductId, Name, ListPrice, Weight")
 	.From("[Product]")
 	.Where($"[ListPrice] <= {maxPrice}")
 	.Where($"[Weight] <= {maxWeight}")
@@ -286,6 +286,23 @@ var q = cn.QueryBuilder()
 ```
 
 There are also chained-methods for adding GROUP BY, HAVING, ORDER BY, and paging (OFFSET x ROWS / FETCH NEXT x ROWS ONLY).
+
+
+## nameof() and raw strings
+
+For those who like strongly typed queries, you can also use `nameof` expression, but you have to define format "raw" such that the string is preserved and it's not converted into a @parameter.
+
+```cs
+var q = cn.QueryBuilder($@"
+	SELECT c.[{nameof(Category.Name):raw}] as [Category], 
+		   sc.[{nameof(Subcategory.Name):raw}] as [Subcategory], 
+		   p.[{nameof(Product.Name):raw}], p.[ProductNumber]"
+    FROM [Product] p
+	INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+	INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]");
+```
+
+And in case you can use "find references", "rename" (refactor), etc.
 
 ## Using Type-Safe Filters without QueryBuilder
 

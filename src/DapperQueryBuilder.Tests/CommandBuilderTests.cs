@@ -60,6 +60,30 @@ namespace DapperQueryBuilder.Tests
         }
 
         [Test]
+        public void TestNameof()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .QueryBuilder($@"
+                SELECT * FROM [Production].[Product]
+                WHERE
+                [{nameof(Product.Name):raw}] LIKE {productName}
+                AND [ProductSubcategoryID] = {subCategoryId}
+                ORDER BY [ProductId]");
+
+            Assert.AreEqual(@"
+                SELECT * FROM [Production].[Product]
+                WHERE
+                [Name] LIKE @p0
+                AND [ProductSubcategoryID] = @p1
+                ORDER BY [ProductId]", query.Sql);
+
+            var products = query.Query<Product>();
+        }
+
+        [Test]
         public void TestAppends()
         {
             string productName = "%mountain%";

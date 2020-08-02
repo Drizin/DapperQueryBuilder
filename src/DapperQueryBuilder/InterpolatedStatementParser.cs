@@ -65,6 +65,14 @@ namespace DapperQueryBuilder
                 int argPos = int.Parse(matches[i].Groups["ArgPos"].Value);
                 string argFormat = matches[i].Groups["Format"].Value;
                 object arg = arguments[argPos];
+                lastPos = matches[i].Index + matches[i].Length;
+
+                if (arg is string && argFormat == "raw") // example: {nameof(Product.Name):raw}  -> won't be parametrized, we just emit raw string!
+                {
+                    sb.Append(arg);
+                    continue;
+                }
+
                 string parmName = "@p" + _autoNamedParametersCount.ToString();
                 _autoNamedParametersCount++;
                 //var direction = System.Data.ParameterDirection.Input;
@@ -72,8 +80,6 @@ namespace DapperQueryBuilder
                 //    direction = System.Data.ParameterDirection.Output;
                 Parameters.Add(parmName, arg);
                 sb.Append(parmName);
-
-                lastPos = matches[i].Index + matches[i].Length;
             }
             string lastPart = format.Substring(lastPos).Replace("{{", "{").Replace("}}", "}");
             sb.Append(lastPart);
