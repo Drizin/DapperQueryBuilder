@@ -95,6 +95,27 @@ WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
 ORDER BY ProductId
 ```
 
+# Quickstart / NuGet Package
+
+1) Download [NuGet package Dapper-QueryBuilder](https://www.nuget.org/packages/Dapper-QueryBuilder)
+
+2) Start using like this:
+
+```cs
+using DapperQueryBuilder;
+
+// ...
+cn = new SqlConnection(connectionString);
+
+var q = cn.QueryBuilder()
+	.Select($"ProductId, Name, ListPrice, Weight")
+	.From($"[Production].[Product]")
+	.Where($"[ListPrice] <= {maxPrice}")
+	.Where($"[Weight] <= {maxWeight}")
+	.Where($"[Name] LIKE {search}")
+	.OrderBy($"ProductId");
+var products = q.Query<Product>();
+```
 
 # Documentation / More Examples
 

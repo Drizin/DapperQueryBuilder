@@ -9,7 +9,8 @@
     <Copyright>Rick Drizin</Copyright>
     <Company>Rick Drizin</Company>
     <Version>1.0.0</Version>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>Dapper-QueryBuilder</PackageId>
     <DocumentationFile>DapperQueryBuilder.xml</DocumentationFile>
   </PropertyGroup>
 
