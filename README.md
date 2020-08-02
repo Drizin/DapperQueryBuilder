@@ -32,7 +32,6 @@ You can just write like this:
 cmd.Append($" AND Name LIKE {productName}"); 
 // query and parameters are wrapped inside CommandBuilder or QueryBuilder and passed automatically to Dapper
 var products = cmd.Query<Product>(); 
-
 ```
 
 **2. Combining Filters**
@@ -60,10 +59,12 @@ q.Where(new Filters(Filters.FiltersType.OR)
 	new Filter($"[Name] LIKE {search}")
 });
 
-// Query() will automatically build your SQL query, and will replace your /**where**/ (if any filter was added)
-// it will also pass an underlying DynamicParameters object, with all parameters you passed using string interpolation
 var products = q.Query<Product>();	
 
+// Query() will automatically build your SQL query, and will replace your /**where**/ (if any filter was added)
+// "WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)"
+// it will also pass an underlying DynamicParameters object, with all parameters you passed using string interpolation 
+// (@p0 as minPrice, @p1 as maxPrice, etc..)
 ```
 
 
