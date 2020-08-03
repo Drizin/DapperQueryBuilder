@@ -45,7 +45,7 @@ ORDER BY ProductId
             int maxWeight = 15;
             string search = "%Mountain%";
 
-            var q = cn.QueryBuilder()
+            var q = cn.QueryBuilder<Product>()
                 .Select($"ProductId")
                 .Select($"Name")
                 .Select($"ListPrice")
@@ -65,7 +65,7 @@ ORDER BY ProductId
             Assert.AreEqual(q.Parameters.Get<int>("p1"), maxWeight);
             Assert.AreEqual(q.Parameters.Get<string>("p2"), search);
 
-            var products = q.Query<Product>();
+            var products = q.Query();
             
             Assert.That(products.Any());
         }
@@ -75,7 +75,7 @@ ORDER BY ProductId
         public void TestTemplateAPI()
         {
 
-            var q = cn.QueryBuilder(
+            var q = cn.QueryBuilder<Product>(
 $@"SELECT ProductId, Name, ListPrice, Weight
 FROM [Production].[Product]
 /**where**/
@@ -93,7 +93,7 @@ ORDER BY ProductId
             Assert.AreEqual(q.Parameters.Get<int>("p1"), maxWeight);
             Assert.AreEqual(q.Parameters.Get<string>("p2"), search);
 
-            var products = q.Query<Product>();
+            var products = q.Query();
 
             Assert.That(products.Any());
         }
@@ -110,13 +110,13 @@ ORDER BY ProductId
         public void JoinsTest()
         {
             var categories = new string[] { "Components", "Clothing", "Acessories" };
-            var q = cn.QueryBuilder()
+            var q = cn.QueryBuilder<ProductCategories>()
                 .SelectDistinct($"c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
                 .From($"[Production].[Product] p")
                 .From($"INNER JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
                 .From($"INNER JOIN [Production].[ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
                 .Where($"c.[Name] IN {categories}");
-            var prods = q.Query<ProductCategories>();
+            var prods = q.Query();
         }
 
 
@@ -133,7 +133,7 @@ WHERE [ListPrice] <= @p0 AND ([Weight] <= @p1 OR [Name] LIKE @p2)
 ORDER BY ProductId
 ";
 
-            var q = cn.QueryBuilder()
+            var q = cn.QueryBuilder<Product>()
                 .Select($"ProductId")
                 .Select($"Name")
                 .Select($"ListPrice")
@@ -155,7 +155,7 @@ ORDER BY ProductId
             Assert.AreEqual(q.Parameters.Get<int>("p1"), maxWeight);
             Assert.AreEqual(q.Parameters.Get<string>("p2"), search);
 
-            var products = q.Query<Product>();
+            var products = q.Query();
 
             Assert.That(products.Any());
         }
@@ -173,7 +173,7 @@ FROM [Production].[Product]
 WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)
 ";
 
-            var q = cn.QueryBuilder()
+            var q = cn.QueryBuilder<Product>()
                 .Select($"ProductId, Name, ListPrice, Weight")
                 .From($"[Production].[Product]")
                 .Where(new Filters(
@@ -195,7 +195,7 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
             Assert.AreEqual(q.Parameters.Get<int>("p2"), maxWeight);
             Assert.AreEqual(q.Parameters.Get<string>("p3"), search);
 
-            var products = q.Query<Product>();
+            var products = q.Query();
         }
 
         [Test]

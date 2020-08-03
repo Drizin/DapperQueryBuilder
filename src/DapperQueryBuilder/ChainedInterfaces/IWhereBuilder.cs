@@ -7,37 +7,37 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder with one or more clause in where, which can still add more clauses to where
     /// </summary>
-    public interface IWhereBuilder : ICommandBuilder, ICompleteCommand
+    public interface IWhereBuilder<T> : ICommandBuilder, ICompleteCommand<T>
     {
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        IWhereBuilder Where(Filter filter);
+        IWhereBuilder<T> Where(Filter filter);
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        IWhereBuilder Where(Filters filter);
+        IWhereBuilder<T> Where(Filters filter);
 
         /// <summary>
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
-        IWhereBuilder Where(FormattableString filter);
+        IWhereBuilder<T> Where(FormattableString filter);
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        //IWhereBuilder Where(RawString filter);
+        //IWhereBuilder<T> Where(RawString filter);
 
         /// <summary>
         /// Adds a new condition to groupby clauses.
         /// </summary>
-        IGroupByBuilder GroupBy(FormattableString groupBy);
+        IGroupByBuilder<T> GroupBy(FormattableString groupBy);
 
         /// <summary>
         /// Adds a new condition to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(FormattableString orderBy);
+        IOrderByBuilder<T> OrderBy(FormattableString orderBy);
     }
 }

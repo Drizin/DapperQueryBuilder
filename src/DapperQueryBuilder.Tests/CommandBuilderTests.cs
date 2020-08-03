@@ -42,7 +42,7 @@ namespace DapperQueryBuilder.Tests
             int subCategoryId = 12;
 
             var query = cn
-                .QueryBuilder($@"
+                .QueryBuilder<Product>($@"
                 SELECT * FROM [Production].[Product]
                 WHERE
                 [Name] LIKE {productName}
@@ -56,7 +56,7 @@ namespace DapperQueryBuilder.Tests
                 AND [ProductSubcategoryID] = @p1
                 ORDER BY [ProductId]", query.Sql);
 
-            var products = query.Query<Product>();
+            var products = query.Query();
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace DapperQueryBuilder.Tests
             int subCategoryId = 12;
 
             var query = cn
-                .QueryBuilder($@"
+                .QueryBuilder<Product>($@"
                 SELECT * FROM [Production].[Product]
                 WHERE
                 [{nameof(Product.Name):raw}] LIKE {productName}
@@ -80,7 +80,7 @@ namespace DapperQueryBuilder.Tests
                 AND [ProductSubcategoryID] = @p1
                 ORDER BY [ProductId]", query.Sql);
 
-            var products = query.Query<Product>();
+            var products = query.Query();
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace DapperQueryBuilder.Tests
             int subCategoryId = 12;
 
             var query = cn
-                .CommandBuilder($@"SELECT * FROM [Production].[Product]")
+                .CommandBuilder<Product>($@"SELECT * FROM [Production].[Product]")
                 .AppendLine($"WHERE")
                 .AppendLine($"[Name] LIKE {productName}")
                 .AppendLine($"AND [ProductSubcategoryID] = {subCategoryId}")
@@ -102,7 +102,7 @@ WHERE
 AND [ProductSubcategoryID] = @p1
 ORDER BY [ProductId]", query.Sql);
 
-            var products = query.Query<Product>();
+            var products = query.Query();
         }
 
         [Test]
@@ -112,7 +112,7 @@ ORDER BY [ProductId]", query.Sql);
             int subCategoryId = 12;
 
             var query = cn
-                .CommandBuilder($@"SELECT * FROM [Production].[Product]")
+                .CommandBuilder<Product>($@"SELECT * FROM [Production].[Product]")
                 .Append($"WHERE")
                 .Append($"[Name] LIKE {productName}")
                 .Append($"AND [ProductSubcategoryID] = {subCategoryId}")
@@ -120,7 +120,7 @@ ORDER BY [ProductId]", query.Sql);
             
             Assert.AreEqual(@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0 AND [ProductSubcategoryID] = @p1 ORDER BY [ProductId]", query.Sql);
 
-            var products = query.Query<Product>();
+            var products = query.Query();
         }
 
         [Test]

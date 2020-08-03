@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder with one or more having clauses, which can still add more clauses to having
     /// </summary>
-    public interface IGroupByHavingBuilder : ICommandBuilder, ICompleteCommand
+    public interface IGroupByHavingBuilder<T> : ICommandBuilder, ICompleteCommand<T>
     {
 
         /// <summary>
@@ -15,11 +15,11 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="having"></param>
         /// <returns></returns>
-        IGroupByHavingBuilder Having(FormattableString having);
+        IGroupByHavingBuilder<T> Having(FormattableString having);
 
         /// <summary>
         /// Adds a new condition to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(FormattableString orderBy);
+        IOrderByBuilder<T> OrderBy(FormattableString orderBy);
     }
 }

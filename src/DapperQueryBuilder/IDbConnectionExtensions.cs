@@ -12,7 +12,7 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="cnn"></param>
         /// <returns></returns>
-        public static IEmptyQueryBuilder QueryBuilder(this IDbConnection cnn)
+        public static IEmptyQueryBuilder<dynamic> QueryBuilder(this IDbConnection cnn)
         {
             return new QueryBuilder(cnn);
         }
@@ -36,7 +36,7 @@ namespace DapperQueryBuilder
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
         /// </param>
         /// <returns></returns>
-        public static IFromBuilder QueryBuilder(this IDbConnection cnn, FormattableString query)
+        public static IFromBuilder<dynamic> QueryBuilder(this IDbConnection cnn, FormattableString query)
         {
             return new QueryBuilder(cnn, query);
         }

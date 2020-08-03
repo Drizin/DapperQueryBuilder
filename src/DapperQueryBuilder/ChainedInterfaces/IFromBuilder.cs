@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder with one or more from clauses, which can still add more clauses to from
     /// </summary>
-    public interface IFromBuilder : ICommandBuilder, ICompleteCommand
+    public interface IFromBuilder<T> : ICommandBuilder, ICompleteCommand<T>
     {
         /// <summary>
         /// Adds a new table to from clauses. <br />
@@ -15,32 +15,32 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        IFromBuilder From(FormattableString from);
+        IFromBuilder<T> From(FormattableString from);
 
         /// <summary>
         /// Adds a new group of conditions to where clauses.
         /// </summary>
-        IWhereBuilder Where(Filter filter);
+        IWhereBuilder<T> Where(Filter filter);
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        IWhereBuilder Where(Filters filter);
+        IWhereBuilder<T> Where(Filters filter);
 
         /// <summary>
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
-        IWhereBuilder Where(FormattableString filter);
+        IWhereBuilder<T> Where(FormattableString filter);
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        //IWhereBuilder Where(RawString filter);
+        //IWhereBuilder<T> Where(RawString filter);
 
         /// <summary>
         /// Adds a new column to orderby clauses.
         /// </summary>
-        IOrderByBuilder OrderBy(FormattableString orderBy);
+        IOrderByBuilder<T> OrderBy(FormattableString orderBy);
     }
 }
