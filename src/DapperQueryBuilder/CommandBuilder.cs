@@ -47,8 +47,7 @@ namespace DapperQueryBuilder
         {
             var parsedStatement = new InterpolatedStatementParser(command);
             parsedStatement.MergeParameters(this.Parameters);
-            if (!string.IsNullOrEmpty(parsedStatement.Sql)) // if it's empty command we don't add a linebreak
-                _command.AppendLine(parsedStatement.Sql);
+			_command.Append(parsedStatement.Sql);
         }
         #endregion
 
@@ -109,19 +108,33 @@ namespace DapperQueryBuilder
         {
             var parsedStatement = new InterpolatedStatementParser(statement);
             parsedStatement.MergeParameters(this.Parameters);
-            _command.Append(parsedStatement.Sql);
+            string sql = parsedStatement.Sql;
+            if (!string.IsNullOrWhiteSpace(sql))
+            {
+                // we assume that a single word will always be rendered in a single statement,
+                // so if there is no whitespace (or line break) immediately before this new statement, we add a space
+                string currentLine = _command.ToString().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).LastOrDefault();
+                if (currentLine != null && currentLine.Length > 0 && currentLine.Last() != ' ')
+                {
+                    _command.Append(" ");
+                }
+            }
+            _command.Append(sql);
             return this;
         }
 
         /// <summary>
-        /// Appends a statement to the current command. <br />
+        /// Appends a statement to the current command, but before statement adds a linebreak. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
         /// <param name="statement">SQL command</param>
         public CommandBuilder AppendLine(FormattableString statement)
         {
-            this.Append(statement);
+            // instead of appending line AFTER the statement it makes sense to add BEFORE, just to ISOLATE the new line from previous one
+            // there's no point in having linebreaks at the end of a query
             _command.AppendLine();
+
+            this.Append(statement);
             return this;
         }
 
@@ -129,7 +142,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// SQL of Command
         /// </summary>
-        public virtual string Sql => _command.ToString().TrimEnd(); // base CommandBuilder will just have a single variable for the statement; TrimEnd because linebreaks at end may break commands like CommandType.StoreProcedure ("procedureName\n")
+        public virtual string Sql => _command.ToString(); // base CommandBuilder will just have a single variable for the statement;
 
         /// <summary>
         /// Parameters of Command

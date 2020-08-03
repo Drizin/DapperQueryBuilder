@@ -106,6 +106,24 @@ ORDER BY [ProductId]", query.Sql);
         }
 
         [Test]
+        public void TestAutoSpacing()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .CommandBuilder($@"SELECT * FROM [Production].[Product]")
+                .Append($"WHERE")
+                .Append($"[Name] LIKE {productName}")
+                .Append($"AND [ProductSubcategoryID] = {subCategoryId}")
+                .Append($"ORDER BY [ProductId]");
+            
+            Assert.AreEqual(@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0 AND [ProductSubcategoryID] = @p1 ORDER BY [ProductId]", query.Sql);
+
+            var products = query.Query<Product>();
+        }
+
+        [Test]
         public void TestStoredProcedure()
         {
             var q = cn.CommandBuilder($"[HumanResources].[uspUpdateEmployeePersonalInfo]")
