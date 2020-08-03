@@ -83,12 +83,12 @@ using DapperQueryBuilder;
 cn = new SqlConnection(connectionString);
 
 var products = cn.QueryBuilder($@"
-	SELECT ProductId, Name, ListPrice, Weight
-	FROM [Product]
-	WHERE [ListPrice] <= {maxPrice}
-	AND [Weight] <= {maxWeight}")
-	AND [Name] LIKE {search}
-	ORDER BY ProductId").Query<Product>();
+    SELECT ProductId, Name, ListPrice, Weight
+    FROM [Product]
+    WHERE [ListPrice] <= {maxPrice}
+    AND [Weight] <= {maxWeight}")
+    AND [Name] LIKE {search}
+    ORDER BY ProductId").Query<Product>();
 ```
 
 Or building dynamic conditions like this:
@@ -99,9 +99,9 @@ using DapperQueryBuilder;
 cn = new SqlConnection(connectionString);
 
 var q = cn.QueryBuilder($@"
-	SELECT ProductId, Name, ListPrice, Weight
-	FROM [Product]
-	WHERE 1=1 ");
+    SELECT ProductId, Name, ListPrice, Weight
+    FROM [Product]
+    WHERE 1=1 ");
 
 q.AppendLine("AND [ListPrice] <= {maxPrice}");
 q.AppendLine("AND [Weight] <= {maxWeight}");
@@ -131,11 +131,11 @@ var cn = new SqlConnection(connectionString);
 
 // You can build the query manually and just use QueryBuilder to replace "where" filters (if any)
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
-	FROM [Product]
-	/**where**/
-	ORDER BY ProductId
-	");
-	
+    FROM [Product]
+    /**where**/
+    ORDER BY ProductId
+    ");
+    
 // You just pass the parameters as if it was an interpolated string, 
 // and QueryBuilder will automatically convert them to Dapper parameters (injection-safe)
 q.Where($"[ListPrice] <= {maxPrice}");
@@ -143,7 +143,7 @@ q.Where($"[Weight] <= {maxWeight}");
 q.Where($"[Name] LIKE {search}");
 
 // Query() will automatically build your query and replace your /**where**/ (if any filter was added)
-var products = q.Query<Product>();	
+var products = q.Query<Product>();
 ```
 
 You would get this query:
@@ -157,10 +157,10 @@ ORDER BY ProductId
 If you don't need the `WHERE` keyword (if you already have other fixed conditions before), you can use `/**filters**/` instead:
 ```cs
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
-	FROM [Product]
-	WHERE [Price]>{minPrice} /**filters**/
-	ORDER BY ProductId
-	");
+    FROM [Product]
+    WHERE [Price]>{minPrice} /**filters**/
+    ORDER BY ProductId
+    ");
 ```
 
 ## Combining Filters
@@ -173,23 +173,23 @@ But differently from other builders, we don't try to reinvent SQL syntax or crea
 
 ```cs
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
-	FROM [Product]
-	/**where**/
-	ORDER BY ProductId
-	");
+    FROM [Product]
+    /**where**/
+    ORDER BY ProductId
+    ");
 
 q.Where(new Filters()
 {
-	new Filter($"[ListPrice] >= {minPrice}"),
-	new Filter($"[ListPrice] <= {maxPrice}")
+    new Filter($"[ListPrice] >= {minPrice}"),
+    new Filter($"[ListPrice] <= {maxPrice}")
 });
 q.Where(new Filters(Filters.FiltersType.OR)
 {
-	new Filter($"[Weight] <= {maxWeight}"),
-	new Filter($"[Name] LIKE {search}")
+    new Filter($"[Weight] <= {maxWeight}"),
+    new Filter($"[Name] LIKE {search}")
 });
 
-var products = q.Query<Product>();	
+var products = q.Query<Product>();
 
 // Query() will automatically build your SQL query, and will replace your /**where**/ (if any filter was added)
 // "WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)"
@@ -211,7 +211,7 @@ q.Append($" AND [Weight] <= {maxWeight}");
 q.Append($" AND [Name] LIKE {search}");
 q.Append($" ORDER BY ProductId");
 
-var products = q.Query<Product>();	
+var products = q.Query<Product>();
 ```
 
 ## IN lists
@@ -220,10 +220,10 @@ Dapper allows us to use IN lists magically. And it also works with our string in
 
 ```cs
 var q = cn.QueryBuilder($@"
-	SELECT c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]
-	FROM [Product] p
-	INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
-	INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]");
+    SELECT c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]
+    FROM [Product] p
+    INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+    INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]");
 
 var categories = new string[] { "Components", "Clothing", "Acessories" };
 q.Append($"WHERE c.[Name] IN {categories}");
@@ -239,17 +239,17 @@ So, basically, instead of starting with a full query and just appending new filt
 
 ```cs
 var q = cn.QueryBuilder()
-	.Select($"ProductId")
-	.Select($"Name")
-	.Select($"ListPrice")
-	.Select($"Weight")
-	.From($"[Product]")
-	.Where($"[ListPrice] <= {maxPrice}")
-	.Where($"[Weight] <= {maxWeight}")
-	.Where($"[Name] LIKE {search}")
-	.OrderBy($"ProductId");
-	
-var products = q.Query<Product>();	
+    .Select($"ProductId")
+    .Select($"Name")
+    .Select($"ListPrice")
+    .Select($"Weight")
+    .From($"[Product]")
+    .Where($"[ListPrice] <= {maxPrice}")
+    .Where($"[Weight] <= {maxWeight}")
+    .Where($"[Name] LIKE {search}")
+    .OrderBy($"ProductId");
+    
+var products = q.Query<Product>();
 ```
 
 You would get this query:
@@ -264,12 +264,12 @@ Or more elaborated:
 
 ```cs
 var q = cn.QueryBuilder()
-	.SelectDistinct($"ProductId, Name, ListPrice, Weight")
-	.From("[Product]")
-	.Where($"[ListPrice] <= {maxPrice}")
-	.Where($"[Weight] <= {maxWeight}")
-	.Where($"[Name] LIKE {search}")
-	.OrderBy("ProductId");
+    .SelectDistinct($"ProductId, Name, ListPrice, Weight")
+    .From("[Product]")
+    .Where($"[ListPrice] <= {maxPrice}")
+    .Where($"[Weight] <= {maxWeight}")
+    .Where($"[Name] LIKE {search}")
+    .OrderBy("ProductId");
 ```
 
 Building joins dynamically using Fluent API:
@@ -278,11 +278,11 @@ Building joins dynamically using Fluent API:
 var categories = new string[] { "Components", "Clothing", "Acessories" };
 
 var q = cn.QueryBuilder()
-	.SelectDistinct("c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
-	.From("[Product] p")
-	.From("INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
-	.From("INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
-	.Where($"c.[Name] IN {categories}");
+    .SelectDistinct($"c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
+    .From($"[Product] p")
+    .From($"INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
+    .From($"INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
+    .Where($"c.[Name] IN {categories}");
 ```
 
 There are also chained-methods for adding GROUP BY, HAVING, ORDER BY, and paging (OFFSET x ROWS / FETCH NEXT x ROWS ONLY).
@@ -294,12 +294,13 @@ For those who like strongly typed queries, you can also use `nameof` expression,
 
 ```cs
 var q = cn.QueryBuilder($@"
-	SELECT c.[{nameof(Category.Name):raw}] as [Category], 
-		   sc.[{nameof(Subcategory.Name):raw}] as [Subcategory], 
-		   p.[{nameof(Product.Name):raw}], p.[ProductNumber]"
+    SELECT
+        c.[{nameof(Category.Name):raw}] as [Category], 
+        sc.[{nameof(Subcategory.Name):raw}] as [Subcategory], 
+        p.[{nameof(Product.Name):raw}], p.[ProductNumber]"
     FROM [Product] p
-	INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
-	INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]");
+    INNER JOIN [ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+    INNER JOIN [ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]");
 ```
 
 And in case you can use "find references", "rename" (refactor), etc.
@@ -314,13 +315,13 @@ Dapper.DynamicParameters parms = new Dapper.DynamicParameters();
 var filters = new Filters(Filters.FiltersType.AND);
 filters.Add(new Filters()
 {
-	new Filter($"[ListPrice] >= {minPrice}"),
-	new Filter($"[ListPrice] <= {maxPrice}")
+    new Filter($"[ListPrice] >= {minPrice}"),
+    new Filter($"[ListPrice] <= {maxPrice}")
 });
 filters.Add(new Filters(Filters.FiltersType.OR)
 {
-	new Filter($"[Weight] <= {maxWeight}"),
-	new Filter($"[Name] LIKE {search}")
+    new Filter($"[Weight] <= {maxWeight}"),
+    new Filter($"[Name] LIKE {search}")
 });
 
 string where = filters.BuildFilters(parms);
@@ -332,14 +333,14 @@ string where = filters.BuildFilters(parms);
 ```cs
 // This is basically Dapper, but with a FluentAPI where you can append parameters dynamically.
 var q = cn.CommandBuilder($"[HumanResources].[uspUpdateEmployeePersonalInfo]")
-	.AddParameter("ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue)
-	.AddParameter("ErrorLogID", dbType: DbType.Int32, direction: ParameterDirection.Output)
-	.AddParameter("BusinessEntityID", businessEntityID)
-	.AddParameter("NationalIDNumber", nationalIDNumber)
-	.AddParameter("BirthDate", birthDate)
-	.AddParameter("MaritalStatus", maritalStatus)
-	.AddParameter("Gender", gender);
-	
+    .AddParameter("ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue)
+    .AddParameter("ErrorLogID", dbType: DbType.Int32, direction: ParameterDirection.Output)
+    .AddParameter("BusinessEntityID", businessEntityID)
+    .AddParameter("NationalIDNumber", nationalIDNumber)
+    .AddParameter("BirthDate", birthDate)
+    .AddParameter("MaritalStatus", maritalStatus)
+    .AddParameter("Gender", gender);
+    
 int affected = q.Execute(commandType: CommandType.StoredProcedure);
 int returnValue = q.Parameters.Get<int>("ReturnValue");
 ```
@@ -360,22 +361,22 @@ parms.Add("categoryId", categoryId);
 string where = (filters.Any() ? " WHERE " + string.Join(" AND ", filters) : "");
 
 var products = cn.Query<Product>($@"
-	SELECT * FROM [Product]"
-	{where}
-	ORDER BY [ProductId]", parms);
+    SELECT * FROM [Product]"
+    {where}
+    ORDER BY [ProductId]", parms);
 
 ```
 
 **Now with DapperQueryBuilder it's much easier to write queries with dynamic filters:**
 ```cs
 var query = cn.QueryBuilder(@"
-	SELECT * FROM [Product] 
-	/**where**/ 
-	ORDER BY [ProductId]")
-	.Where($"[Name] LIKE {productName}")
-	.Where($"[CategoryId] = {categoryId}");
+    SELECT * FROM [Product] 
+    /**where**/ 
+    ORDER BY [ProductId]")
+    .Where($"[Name] LIKE {productName}")
+    .Where($"[CategoryId] = {categoryId}");
 
-var products = query.Query<Product>();	
+var products = query.Query<Product>();
 ```
 
 
