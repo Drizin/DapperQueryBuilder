@@ -224,6 +224,27 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
         }
 
+        [Test]
+        public void GenericTest()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+            var query = cn
+                .CommandBuilder<Product>($@"SELECT * FROM [Production].[Product]")
+                .AppendLine($"WHERE")
+                .AppendLine($"[Name] LIKE {productName}")
+                .AppendLine($"AND [ProductSubcategoryID] = {subCategoryId}")
+                .AppendLine($"ORDER BY [ProductId]");
+            Assert.AreEqual(
+@"SELECT * FROM [Production].[Product]
+WHERE
+[Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1
+ORDER BY [ProductId]", query.Sql);
+
+            var products = query.Query();
+        }
+
 
     }
 }

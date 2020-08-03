@@ -12,7 +12,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder
     /// </summary>
-    public class QueryBuilder : CommandBuilder, IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteCommand
+    public class QueryBuilder<T> : CommandBuilder<T>, IEmptyQueryBuilder<T>, ISelectBuilder<T>, ISelectDistinctBuilder<T>, IFromBuilder<T>, IWhereBuilder<T>, IGroupByBuilder<T>, IGroupByHavingBuilder<T>, IOrderByBuilder<T>, ICompleteCommand<T>
     {
         #region Members
         private readonly List<string> _selectColumns = new List<string>();
@@ -55,7 +55,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one column to the select clauses
         /// </summary>
-        public ISelectBuilder Select(FormattableString column)
+        public ISelectBuilder<T> Select(FormattableString column)
         {
             var parsedStatement = new InterpolatedStatementParser(column);
             parsedStatement.MergeParameters(this.Parameters);
@@ -66,7 +66,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one or more columns to the select clauses
         /// </summary>
-        public ISelectBuilder Select(params FormattableString[] moreColumns)
+        public ISelectBuilder<T> Select(params FormattableString[] moreColumns)
         {
             //Select(column);
             foreach (var col in moreColumns)
@@ -77,7 +77,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        public ISelectDistinctBuilder SelectDistinct(FormattableString select)
+        public ISelectDistinctBuilder<T> SelectDistinct(FormattableString select)
         {
             _isSelectDistinct = true;
             var parsedStatement = new InterpolatedStatementParser(select);
@@ -89,7 +89,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds one or more columns to the select clauses, and defines that query is a SELECT DISTINCT type
         /// </summary>
-        public ISelectDistinctBuilder SelectDistinct(params FormattableString[] moreColumns)
+        public ISelectDistinctBuilder<T> SelectDistinct(params FormattableString[] moreColumns)
         {
             //SelectDistinct(select);
             foreach (var col in moreColumns)
@@ -103,7 +103,7 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        public IFromBuilder From(FormattableString from)
+        public IFromBuilder<T> From(FormattableString from)
         {
             var parsedStatement = new InterpolatedStatementParser(from);
             parsedStatement.MergeParameters(this.Parameters);
@@ -120,7 +120,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public IWhereBuilder Where(Filter filter)
+        public IWhereBuilder<T> Where(Filter filter)
         {
             filter.MergeParameters(this.Parameters);
             _filters.Add(filter);
@@ -130,7 +130,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public IWhereBuilder Where(Filters filters)
+        public IWhereBuilder<T> Where(Filters filters)
         {
             filters.MergeParameters(this.Parameters);
             _filters.Add(filters);
@@ -142,7 +142,7 @@ namespace DapperQueryBuilder
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
-        public IWhereBuilder Where(FormattableString filter)
+        public IWhereBuilder<T> Where(FormattableString filter)
         {
             return Where(new Filter(filter));
         }
@@ -158,7 +158,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new column to orderby clauses.
         /// </summary>
-        public IOrderByBuilder OrderBy(FormattableString orderBy)
+        public IOrderByBuilder<T> OrderBy(FormattableString orderBy)
         {
             var parsedStatement = new InterpolatedStatementParser(orderBy);
             parsedStatement.MergeParameters(this.Parameters);
@@ -169,7 +169,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new column to groupby clauses.
         /// </summary>
-        public IGroupByBuilder GroupBy(FormattableString groupBy)
+        public IGroupByBuilder<T> GroupBy(FormattableString groupBy)
         {
             var parsedStatement = new InterpolatedStatementParser(groupBy);
             parsedStatement.MergeParameters(this.Parameters);
@@ -180,7 +180,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to having clauses.
         /// </summary>
-        public IGroupByHavingBuilder Having(FormattableString having)
+        public IGroupByHavingBuilder<T> Having(FormattableString having)
         {
             var parsedStatement = new InterpolatedStatementParser(having);
             parsedStatement.MergeParameters(this.Parameters);
@@ -191,7 +191,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds offset and rowcount clauses
         /// </summary>
-        public ICompleteCommand Limit(int offset, int rowCount)
+        public ICompleteCommand<T> Limit(int offset, int rowCount)
         {
             _offset = offset;
             _rowCount = rowCount;
@@ -215,9 +215,9 @@ namespace DapperQueryBuilder
                 if (_queryTemplate != null)
                     finalSql.Append(_queryTemplate);
                 else if (_selectColumns.Any())
-                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT " : "")}{string.Join(", ", _selectColumns)}");
-                else
-                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT " : "")}*");
+                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}{string.Join(", ", _selectColumns)}");
+                else 
+                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT ": "")}*");
 
                 if (_queryTemplate == null && _fromTables.Any())
                     finalSql.AppendLine($"{string.Join(Environment.NewLine, _fromTables)}"); //TODO: inner join and left/outer join shortcuts?
