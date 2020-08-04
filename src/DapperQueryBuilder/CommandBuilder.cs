@@ -148,9 +148,27 @@ namespace DapperQueryBuilder
         /// Parameters of Command
         /// </summary>
         public virtual DynamicParameters Parameters => _parameters;
+        
+        #region Dapper (ICompleteQuery.Execute())
+        /// <summary>
+        /// Executes the query (using Dapper), returning the number of rows affected.
+        /// </summary>
+        public int Execute(IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return _cnn.Execute(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }        
+        
+        /// <summary>
+        /// Executes the query (using Dapper), returning the number of rows affected.
+        /// </summary>
+        public Task<int> ExecuteAsync(IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return _cnn.ExecuteAsync(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+        
+        #endregion
 
-        #region Dapper calls (Query<T>, Execute, etc..)
-
+        #region Dapper (ICompleteQuery<T>.Query<T>)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as T.
         /// </summary>
@@ -182,7 +200,9 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingle<T>(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+        #endregion
 
+        #region Dapper (ICompleteQuery<T>.Query() dynamic)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as dynamic objects.
         /// </summary>
@@ -214,7 +234,9 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingle(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+        #endregion
 
+        #region Dapper (ICompleteQuery<T>.Query<object>())
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as type.
         /// </summary>
@@ -246,20 +268,9 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingle(type: type, sql: Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
-
-
-        /// <summary>
-        /// Executes the query (using Dapper), returning the number of rows affected.
-        /// </summary>
-        public int Execute(IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
-        {
-            return _cnn.Execute(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
-        }
-
         #endregion
 
-        #region Dapper Async calls
-
+        #region Dapper (ICompleteQuery<T>.QueryAsync<T>)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as T.
         /// </summary>
@@ -289,7 +300,9 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingleAsync<T>(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+        #endregion
 
+        #region Dapper (ICompleteQuery<T>.QueryAsync() dynamic)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as dynamic objects.
         /// </summary>
@@ -321,7 +334,9 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingleAsync(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+        #endregion
 
+        #region Dapper (ICompleteQuery<T>.QueryAsync<object>)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as type.
         /// </summary>
@@ -351,15 +366,6 @@ namespace DapperQueryBuilder
         {
             return _cnn.QuerySingleAsync(type: type, sql: Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
-
-        /// <summary>
-        /// Executes the query (using Dapper), returning the number of rows affected.
-        /// </summary>
-        public Task<int> ExecuteAsync(IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
-        {
-            return _cnn.ExecuteAsync(Sql, param: _parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
-        }
-
         #endregion
 
 
