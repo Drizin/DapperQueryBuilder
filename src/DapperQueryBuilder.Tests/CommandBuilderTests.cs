@@ -173,6 +173,16 @@ ORDER BY [ProductId]", query.Sql);
                 .Execute();
         }
 
+        [Test]
+        public void TestLike1()
+        {
+            string search = "%mountain%";
+            var products = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {search}").Query<Product>();
+            Assert.That(products.Any());
+            var products2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE '{search}'").Query<Product>();
+            Assert.That(products2.Any());
+        }
+
 
 
     }

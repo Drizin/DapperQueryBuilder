@@ -37,6 +37,22 @@ namespace DapperQueryBuilder
             | RegexOptions.Compiled
             );
         private int _autoNamedParametersCount = 0;
+
+        private static Regex likeQuotesStart = new Regex("\\s+\\bLIKE\\b \\s*'$",
+            RegexOptions.IgnoreCase
+            | RegexOptions.Singleline
+            | RegexOptions.CultureInvariant
+            | RegexOptions.IgnorePatternWhitespace
+            | RegexOptions.Compiled
+            );
+        private static Regex likeQuotesEnd = new Regex("^'",
+            RegexOptions.IgnoreCase
+            | RegexOptions.Singleline
+            | RegexOptions.CultureInvariant
+            | RegexOptions.IgnorePatternWhitespace
+            | RegexOptions.Compiled
+            );
+
         #endregion
 
         #region ctor
@@ -59,13 +75,21 @@ namespace DapperQueryBuilder
             for (int i = 0; i < matches.Count; i++)
             {
                 // unescape escaped curly braces
-                string literal = format.Substring(lastPos, matches[i].Index - lastPos).Replace("{{", "{").Replace("}}", "}");
-                sb.Append(literal);
+                string sql = format.Substring(lastPos, matches[i].Index - lastPos).Replace("{{", "{").Replace("}}", "}");
+                lastPos = matches[i].Index + matches[i].Length;
+
+                // If user passes " column LIKE '{variable}' ", we assume that he used single quotes incorrectly as if interpolated string was a sql literal
+                if (likeQuotesStart.IsMatch(sql) && likeQuotesEnd.IsMatch(format.Substring(lastPos)))
+                {
+                    sql = sql.Substring(0, sql.Length - 1); // skil starting quote
+                    lastPos++; // skip closing quote
+                }
+
+                sb.Append(sql);
                 // arguments[i] may not work because same argument can be used multiple times
                 int argPos = int.Parse(matches[i].Groups["ArgPos"].Value);
                 string argFormat = matches[i].Groups["Format"].Value;
                 object arg = arguments[argPos];
-                lastPos = matches[i].Index + matches[i].Length;
 
                 if (arg is string && argFormat == "raw") // example: {nameof(Product.Name):raw}  -> won't be parametrized, we just emit raw string!
                 {
