@@ -168,8 +168,8 @@ ORDER BY [ProductId]", query.Sql);
         {
             string id = "123";
             int affected = cn.CommandBuilder($@"UPDATE [HumanResources].[Employee] SET")
-                .Append($" NationalIDNumber={id}")
-                .Append($" WHERE BusinessEntityID={businessEntityID}")
+                .Append($"NationalIDNumber={id}")
+                .Append($"WHERE BusinessEntityID={businessEntityID}")
                 .Execute();
         }
 
@@ -181,6 +181,63 @@ ORDER BY [ProductId]", query.Sql);
             Assert.That(products.Any());
             var products2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE '{search}'").Query<Product>();
             Assert.That(products2.Any());
+        }
+
+        [Test]
+        public void TestAutospacing()
+        {
+            string search = "%mountain%";
+            var cmd = cn.CommandBuilder($@"SELECT * FROM [Production].[Product]");
+            cmd.Append($"WHERE [Name] LIKE {search}");
+            cmd.Append($"AND 1=1");
+            Assert.AreEqual("SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0 AND 1=1", cmd.Sql);
+        }
+
+        [Test]
+        public void TestAutospacing2()
+        {
+            string search = "%mountain%";
+            var cmd = cn.CommandBuilder($@"
+                            SELECT * FROM [Production].[Product]
+                            WHERE [Name] LIKE {search}
+                            AND 1=2");
+            Assert.AreEqual(
+                "SELECT * FROM [Production].[Product]" + Environment.NewLine + 
+                "WHERE [Name] LIKE @p0" + Environment.NewLine + 
+                "AND 1=2", cmd.Sql);
+        }
+
+        [Test]
+        public void TestAutospacing3()
+        {
+            string productNumber = "EC-M092";
+            int productId = 328;
+            var cmd = cn.CommandBuilder($@"
+                UPDATE [Production].[Product]
+                SET [ProductNumber]={productNumber}
+                WHERE [ProductId]={productId}");
+
+            string expected = 
+                "UPDATE [Production].[Product]" + Environment.NewLine + 
+                "SET [ProductNumber]=@p0" + Environment.NewLine +
+                "WHERE [ProductId]=@p1";
+            
+            Assert.AreEqual(expected, cmd.Sql);
+        }
+
+        [Test]
+        public void TestAutospacing4()
+        {
+            string productNumber = "EC-M092";
+            int productId = 328;
+
+            var cmd = cn.CommandBuilder($@"UPDATE [Production].[Product]")
+                .Append($"SET [ProductNumber]={productNumber}")
+                .Append($"WHERE [ProductId]={productId}");
+
+            string expected = "UPDATE [Production].[Product] SET [ProductNumber]=@p0 WHERE [ProductId]=@p1";
+
+            Assert.AreEqual(expected, cmd.Sql);
         }
 
 

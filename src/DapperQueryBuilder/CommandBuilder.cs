@@ -25,6 +25,15 @@ namespace DapperQueryBuilder
         private int _autoNamedParametersCount = 0;
         #endregion
 
+        #region statics/constants
+
+        /// <summary>
+        /// Identify all types of line-breaks
+        /// </summary>
+        protected static readonly Regex _lineBreaksRegex = new Regex(@"(\r\n|\n|\r)", RegexOptions.Compiled);
+
+        #endregion
+
         #region ctors
         /// <summary>
         /// New empty QueryBuilder. Should be constructed using .Select(), .From(), .Where(), etc.
@@ -47,7 +56,8 @@ namespace DapperQueryBuilder
         {
             var parsedStatement = new InterpolatedStatementParser(command);
             parsedStatement.MergeParameters(this.Parameters);
-			_command.Append(parsedStatement.Sql);
+            string sql = AdjustMultilineString(parsedStatement.Sql);
+            _command.Append(sql);
         }
         #endregion
 
@@ -108,20 +118,85 @@ namespace DapperQueryBuilder
         {
             var parsedStatement = new InterpolatedStatementParser(statement);
             parsedStatement.MergeParameters(this.Parameters);
-            string sql = parsedStatement.Sql;
+            string sql = AdjustMultilineString(parsedStatement.Sql);
             if (!string.IsNullOrWhiteSpace(sql))
             {
-                // we assume that a single word will always be rendered in a single statement,
-                // so if there is no whitespace (or line break) immediately before this new statement, we add a space
+                // we assume that a single word will always be appended in a single statement (why would anyone split a single sql word in 2 appends?!),
+                // so if there is no whitespace (or line break) between last text and new text, we add a space betwen them
                 string currentLine = _command.ToString().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).LastOrDefault();
-                if (currentLine != null && currentLine.Length > 0 && currentLine.Last() != ' ')
-                {
+                if (currentLine != null && currentLine.Length > 0 && !char.IsWhiteSpace(currentLine.Last()) && !char.IsWhiteSpace(sql[0]))
                     _command.Append(" ");
-                }
             }
             _command.Append(sql);
             return this;
         }
+
+        /// <summary>
+        /// Replaces a text by a replacement text<br />
+        /// </summary>
+        public CommandBuilder Replace(string oldValue, FormattableString newValue)
+        {
+            var parsedStatement = new InterpolatedStatementParser(newValue);
+            parsedStatement.MergeParameters(this.Parameters);
+            string sql = AdjustMultilineString(parsedStatement.Sql);
+            _command.Replace(oldValue, sql);
+            return this;
+        }
+
+
+
+
+
+
+        #region Multi-line blocks can be conveniently used with any indentation, and we will correctly adjust the indentation of those blocks (TrimLeftPadding and TrimFirstEmptyLine)
+        /// <summary>
+        /// Given a text block (multiple lines), this removes the left padding of the block, by calculating the minimum number of spaces which happens in EVERY line.
+        /// Then, other methods writes the lines one by one, which in case will respect the current indent of the writer.
+        /// </summary>
+        protected string AdjustMultilineString(string block)
+        {
+            // copied from https://github.com/Drizin/CodegenCS/
+
+            if (string.IsNullOrEmpty(block))
+                return null;
+            string[] parts = _lineBreaksRegex.Split(block);
+            if (parts.Length <= 1) // no linebreaks at all
+                return block;
+            var nonEmptyLines = parts.Where(line => line.TrimEnd().Length > 0).ToList();
+            if (nonEmptyLines.Count <= 1) // if there's not at least 2 non-empty lines, assume that we don't need to adjust anything
+                return block;
+
+            Match m = _lineBreaksRegex.Match(block);
+            if (m != null && m.Success && m.Index == 0)
+            {
+                block = block.Substring(m.Length); // remove first empty line
+                parts = _lineBreaksRegex.Split(block);
+                nonEmptyLines = parts.Where(line => line.TrimEnd().Length > 0).ToList();
+            }
+
+
+            int minNumberOfSpaces = nonEmptyLines.Select(nonEmptyLine => nonEmptyLine.Length - nonEmptyLine.TrimStart().Length).Min();
+
+            StringBuilder sb = new StringBuilder();
+
+            var matches = _lineBreaksRegex.Matches(block);
+            int lastPos = 0;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                string line = block.Substring(lastPos, matches[i].Index - lastPos);
+                string lineBreak = block.Substring(matches[i].Index, matches[i].Length);
+                lastPos = matches[i].Index + matches[i].Length;
+
+                sb.Append(line.Substring(Math.Min(line.Length, minNumberOfSpaces)));
+                sb.Append(lineBreak);
+            }
+            string lastLine = block.Substring(lastPos);
+            sb.Append(lastLine.Substring(Math.Min(lastLine.Length, minNumberOfSpaces)));
+
+            return sb.ToString();
+        }
+        #endregion
+
 
         /// <summary>
         /// Appends a statement to the current command, but before statement adds a linebreak. <br />
