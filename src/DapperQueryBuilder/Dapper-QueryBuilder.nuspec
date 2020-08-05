@@ -2,17 +2,17 @@
 <package >
   <metadata>
     <id>Dapper-QueryBuilder</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>Dapper.QueryBuilder</title>
     <authors>Rick Drizin</authors>
     <owners>Rick Drizin</owners>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/Drizin/DapperQueryBuilder</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Dapper Query Builder using Fluent API and String Interpolation</description>
+    <description>Dapper Query Builder using String Interpolation and Fluent API</description>
     <copyright>Copyright Rick Drizin 2020</copyright>
     <tags>dapper;query builder</tags>
-    <repository type="git" url="https://github.com/Drizin/DapperQueryBuilder" commit="5dc8c9d13418a98b65a0220b15315efdb752dc89" />
+    <repository type="git" url="https://github.com/Drizin/DapperQueryBuilder" commit="099f70e6d4e775fbcf624618c18905ea0161e09d" />
     <dependencies>
     </dependencies>
   </metadata>
