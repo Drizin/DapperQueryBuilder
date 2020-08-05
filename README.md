@@ -64,8 +64,8 @@ var products = cn.Query<Product>(sql);
 **... you can just write like this:**
 ```cs
 var query = cn.QueryBuilder($"SELECT * FROM [Product] WHERE 1=1");
-query.Append($" AND Name LIKE {productName}"); 
-query.Append($" AND ProductSubcategoryID = {subCategoryId}"); 
+query.Append($"AND Name LIKE {productName}"); 
+query.Append($"AND ProductSubcategoryID = {subCategoryId}"); 
 var products = query.Query<Product>(); 
 ```
 QueryBuilder will wrap both the Query and the Parameters, so that you can easily append new sql statements (and parameters) easily.  
@@ -206,10 +206,10 @@ If you don't like the "magic" of replacing `/**where**/` filters, you can do eve
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight FROM [Product] WHERE 1=1");
 
 // append whatever statements you need (.Append instead of .Where!)
-q.Append($" AND [ListPrice] <= {maxPrice}");
-q.Append($" AND [Weight] <= {maxWeight}");
-q.Append($" AND [Name] LIKE {search}");
-q.Append($" ORDER BY ProductId");
+q.Append($"AND [ListPrice] <= {maxPrice}");
+q.Append($"AND [Weight] <= {maxWeight}");
+q.Append($"AND [Name] LIKE {search}");
+q.Append($"ORDER BY ProductId");
 
 var products = q.Query<Product>();
 ```
