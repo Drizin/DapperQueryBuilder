@@ -38,14 +38,14 @@ namespace DapperQueryBuilder
             );
         private int _autoNamedParametersCount = 0;
 
-        private static Regex likeQuotesStart = new Regex("\\s+\\bLIKE\\b \\s*'$",
+        private static Regex quotedVariableStart = new Regex("(^|\\s+|=|>|<|>=|<=|<>)'$",
             RegexOptions.IgnoreCase
             | RegexOptions.Singleline
             | RegexOptions.CultureInvariant
             | RegexOptions.IgnorePatternWhitespace
             | RegexOptions.Compiled
             );
-        private static Regex likeQuotesEnd = new Regex("^'",
+        private static Regex quotedVariableEnd = new Regex("^'($|\\s+|=|>|<|>=|<=|<>)",
             RegexOptions.IgnoreCase
             | RegexOptions.Singleline
             | RegexOptions.CultureInvariant
@@ -78,14 +78,6 @@ namespace DapperQueryBuilder
                 string sql = format.Substring(lastPos, matches[i].Index - lastPos).Replace("{{", "{").Replace("}}", "}");
                 lastPos = matches[i].Index + matches[i].Length;
 
-                // If user passes " column LIKE '{variable}' ", we assume that he used single quotes incorrectly as if interpolated string was a sql literal
-                if (likeQuotesStart.IsMatch(sql) && likeQuotesEnd.IsMatch(format.Substring(lastPos)))
-                {
-                    sql = sql.Substring(0, sql.Length - 1); // skil starting quote
-                    lastPos++; // skip closing quote
-                }
-
-                sb.Append(sql);
                 // arguments[i] may not work because same argument can be used multiple times
                 int argPos = int.Parse(matches[i].Groups["ArgPos"].Value);
                 string argFormat = matches[i].Groups["Format"].Value;
@@ -93,9 +85,19 @@ namespace DapperQueryBuilder
 
                 if (arg is string && argFormat == "raw") // example: {nameof(Product.Name):raw}  -> won't be parametrized, we just emit raw string!
                 {
+                    sb.Append(sql);
                     sb.Append(arg);
                     continue;
                 }
+
+                // If user passes " column LIKE '{variable}' ", we assume that he used single quotes incorrectly as if interpolated string was a sql literal
+                if (quotedVariableStart.IsMatch(sql) && quotedVariableEnd.IsMatch(format.Substring(lastPos)))
+                {
+                    sql = sql.Substring(0, sql.Length - 1); // skip starting quote
+                    lastPos++; // skip closing quote
+                }
+
+                sb.Append(sql);
 
                 string parmName = "@p" + _autoNamedParametersCount.ToString();
                 _autoNamedParametersCount++;

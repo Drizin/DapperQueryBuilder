@@ -173,15 +173,94 @@ ORDER BY [ProductId]", query.Sql);
                 .Execute();
         }
 
+        /// <summary>
+        /// Quotes around interpolated arguments should be automtaically detected and ignored
+        /// </summary>
         [Test]
-        public void TestLike1()
+        public void TestQuotes1()
         {
             string search = "%mountain%";
-            var products = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {search}").Query<Product>();
+            string expected = "SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0";
+            var cmd = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {search}");
+            var cmd2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE '{search}'");
+            
+            Assert.AreEqual(expected, cmd.Sql);
+            Assert.AreEqual(expected, cmd2.Sql);
+
+            var products = cmd.Query<Product>();
             Assert.That(products.Any());
-            var products2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE '{search}'").Query<Product>();
+            var products2 = cmd2.Query<Product>();
             Assert.That(products2.Any());
         }
+
+
+        /// <summary>
+        /// Quotes around interpolated arguments should be automtaically detected and ignored
+        /// </summary>
+        [Test]
+        public void TestQuotes2()
+        {
+            string productNumber = "AR-5381";
+            string expected = "SELECT * FROM [Production].[Product] WHERE [ProductNumber]=@p0";
+            var cmd = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [ProductNumber]='{productNumber}'");
+            var cmd2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE [ProductNumber]={productNumber}");
+
+            Assert.AreEqual(expected, cmd.Sql);
+            Assert.AreEqual(expected, cmd2.Sql);
+
+            var products = cmd.Query<Product>();
+            Assert.That(products.Any());
+            var products2 = cmd2.Query<Product>();
+            Assert.That(products2.Any());
+        }
+
+
+        /// <summary>
+        /// Quotes around interpolated arguments should be automtaically detected and ignored
+        /// </summary>
+        [Test]
+        public void TestQuotes3()
+        {
+            string productNumber = "AR-5381";
+            string expected = "SELECT * FROM [Production].[Product] WHERE @p0<=[ProductNumber]";
+            var cmd = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE '{productNumber}'<=[ProductNumber]");
+            var cmd2 = cn.CommandBuilder($@"SELECT * FROM [Production].[Product] WHERE {productNumber}<=[ProductNumber]");
+
+            Assert.AreEqual(expected, cmd.Sql);
+            Assert.AreEqual(expected, cmd2.Sql);
+
+            var products = cmd.Query<Product>();
+            Assert.That(products.Any());
+            var products2 = cmd2.Query<Product>();
+            Assert.That(products2.Any());
+        }
+
+
+        /// <summary>
+        /// Quotes around interpolated arguments should not be ignored if it's raw string
+        /// </summary>
+        [Test]
+        public void TestQuotes4()
+        {
+            string literal = "Hello";
+            string search = "%mountain%";
+
+            string expected = "SELECT 'Hello' FROM [Production].[Product] WHERE [Name] LIKE @p0";
+            var cmd = cn.CommandBuilder($@"SELECT '{literal:raw}' FROM [Production].[Product] WHERE [Name] LIKE {search}"); // quotes will be preserved
+
+            string expected2 = "SELECT @p0 FROM [Production].[Product] WHERE [Name] LIKE @p1";
+            var cmd2 = cn.CommandBuilder($@"SELECT '{literal}' FROM [Production].[Product] WHERE [Name] LIKE {search}"); // quotes will be striped
+
+            Assert.AreEqual(expected, cmd.Sql);
+            Assert.AreEqual(expected2, cmd2.Sql);
+
+            var products = cmd.Query<Product>();
+            Assert.That(products.Any());
+
+            var products2 = cmd2.Query<Product>();
+            Assert.That(products2.Any());
+        }
+
 
         [Test]
         public void TestAutospacing()
