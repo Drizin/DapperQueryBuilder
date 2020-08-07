@@ -86,7 +86,7 @@ var products = cn.QueryBuilder($@"
     SELECT ProductId, Name, ListPrice, Weight
     FROM [Product]
     WHERE [ListPrice] <= {maxPrice}
-    AND [Weight] <= {maxWeight}")
+    AND [Weight] <= {maxWeight}
     AND [Name] LIKE {search}
     ORDER BY ProductId").Query<Product>();
 ```
