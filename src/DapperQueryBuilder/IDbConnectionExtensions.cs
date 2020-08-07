@@ -26,7 +26,7 @@ namespace DapperQueryBuilder
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
         /// </param>
         /// <returns></returns>
-        public static IFromBuilder QueryBuilder(this IDbConnection cnn, FormattableString query)
+        public static QueryBuilder QueryBuilder(this IDbConnection cnn, FormattableString query)
         {
             return new QueryBuilder(cnn, query);
         }

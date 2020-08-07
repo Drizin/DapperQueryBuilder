@@ -137,6 +137,15 @@ namespace DapperQueryBuilder
             return this;
         }
 
+        /// <summary>
+        /// How a list of Filters are combined (AND operator or OR operator)
+        /// </summary>
+        public Filters.FiltersType FiltersType 
+        {
+            get { return _filters.Type; }
+            set { _filters.Type = value; }
+        }
+
 
         /// <summary>
         /// Adds a new condition to where clauses. <br />
