@@ -24,6 +24,7 @@ namespace DapperQueryBuilder
         Task<int> ExecuteAsync(IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null);
 
         #endregion
+
         #region Dapper (ICompleteQuery<T>.Query<T>)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as T.

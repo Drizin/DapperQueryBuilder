@@ -5,16 +5,19 @@ using System.Text;
 
 namespace DapperQueryBuilder
 {
+    /// <summary>
+    /// Extends IDbConnection to easily build QueryBuilder or FluentQueryBuilder
+    /// </summary>
     public static class IDbConnectionExtensions
     {
         /// <summary>
-        /// Creates a new QueryBuilder over current connection
+        /// Creates a new empty FluentQueryBuilder over current connection
         /// </summary>
         /// <param name="cnn"></param>
         /// <returns></returns>
         public static IEmptyQueryBuilder QueryBuilder(this IDbConnection cnn)
         {
-            return new QueryBuilder(cnn);
+            return new FluentQueryBuilder(cnn);
         }
 
 

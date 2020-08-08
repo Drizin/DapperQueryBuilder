@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 namespace DapperQueryBuilder
 {
     /// <summary>
-    /// CommandBuilder
+    /// CommandBuilder wraps an underlying SQL statement and the associated parameters. <br />
+    /// Allows to easily add new clauses to underlying statement and also add new parameters.
     /// </summary>
     [DebuggerDisplay("{Sql} ({_parametersStr,nq})")]
     public class CommandBuilder : ICommandBuilder, ICompleteQuery
@@ -36,7 +37,7 @@ namespace DapperQueryBuilder
 
         #region ctors
         /// <summary>
-        /// New empty QueryBuilder. Should be constructed using .Select(), .From(), .Where(), etc.
+        /// New CommandBuilder. 
         /// </summary>
         /// <param name="cnn"></param>
         public CommandBuilder(IDbConnection cnn)
