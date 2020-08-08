@@ -1,14 +1,16 @@
 ﻿using Dapper;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace DapperQueryBuilder
 {
-    public interface ICommandBuilder
+    /// <summary>
+    /// Any command (Contains Connection, SQL, and Parameters)
+    /// </summary>
+    public interface ICommand
     {
-        //void AddDynamicParams(object param);
-
         /// <summary>
         /// SQL of Command
         /// </summary>
@@ -19,5 +21,9 @@ namespace DapperQueryBuilder
         /// </summary>
         DynamicParameters Parameters { get; }
 
+        /// <summary>
+        /// Underlying connection
+        /// </summary>
+        IDbConnection Connection { get; }
     }
 }

@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Empty QueryBuilder (initialized without a template), which can start both with Select() or SelectDistinct()
     /// </summary>
-    public interface IEmptyQueryBuilder : ICommandBuilder
+    public interface IEmptyQueryBuilder : ICompleteCommand
     {
         /// <summary>
         /// Adds one column to the select clauses

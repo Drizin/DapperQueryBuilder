@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder with one or more having clauses, which can still add more clauses to having
     /// </summary>
-    public interface IGroupByHavingBuilder : ICommandBuilder, ICompleteQuery
+    public interface IGroupByHavingBuilder : ICompleteCommand
     {
 
         /// <summary>

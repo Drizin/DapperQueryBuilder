@@ -92,6 +92,40 @@ ORDER BY ProductId
             var prods = q.Query<ProductCategories>();
         }
 
+        [Test]
+        public void FullQueryTest()
+        {
+            var q = cn.QueryBuilder()
+                .Select($"cat.[Name] as [Category]")
+                .Select($"sc.[Name] as [Subcategory]")
+                .Select($"AVG(p.[ListPrice]) as [AveragePrice]")
+                .From($"[Production].[Product] p")
+                .From($"LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
+                .From($"LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]")
+                .Where($"p.[ListPrice] BETWEEN { 0 } and { 1000 }")
+                .Where($"cat.[Name] IS NOT NULL")
+                .GroupBy($"cat.[Name]")
+                .GroupBy($"sc.[Name]")
+                .Having($"COUNT(*)>{5}");
+
+            string expected =
+@"SELECT cat.[Name] as [Category], sc.[Name] as [Subcategory], AVG(p.[ListPrice]) as [AveragePrice]
+FROM [Production].[Product] p
+LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]
+WHERE p.[ListPrice] BETWEEN @p0 and @p1 AND cat.[Name] IS NOT NULL
+GROUP BY cat.[Name], sc.[Name]
+HAVING COUNT(*)>@p2
+";
+
+            Assert.AreEqual(expected, q.Sql);
+
+            var results = q.Query();
+
+            Assert.That(results.Any());
+
+        }
+
 
         [Test]
         public void TestAndOr()
@@ -196,6 +230,18 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
 
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
         }
+
+        [Test]
+        public void TestQueryBuilderFluentComposition()
+        {
+
+            var q = cn.QueryBuilder($"SELECT test FROM test")
+                .Where($"test")
+                .Append($"test") // Append on QueryBuilder still returns a QueryBuilder
+                .Where($"test")
+                ;
+        }
+
 
 
     }

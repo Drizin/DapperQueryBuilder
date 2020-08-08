@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder with one or more from clauses, which can still add more clauses to from
     /// </summary>
-    public interface IFromBuilder : ICommandBuilder, ICompleteQuery
+    public interface IFromBuilder : ICompleteCommand
     {
         /// <summary>
         /// Adds a new table to from clauses. <br />
@@ -32,11 +32,6 @@ namespace DapperQueryBuilder
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
         IWhereBuilder Where(FormattableString filter);
-
-        /// <summary>
-        /// Adds a new condition to where clauses.
-        /// </summary>
-        //IWhereBuilder Where(RawString filter);
 
         /// <summary>
         /// Adds a new column to orderby clauses.

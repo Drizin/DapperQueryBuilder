@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Query Builder which is preparing a SELECT statement
     /// </summary>
-    public interface ISelectBuilder : ICommandBuilder
+    public interface ISelectBuilder : ICompleteCommand
     {
         /// <summary>
         /// Adds one column to the select clauses

@@ -15,11 +15,12 @@ namespace DapperQueryBuilder
     /// On top of that it also loads a "Filters" property which can track a list of filters <br />
     /// which are later combined (by default with AND) and will replace the keyword /**where**/
     /// </summary>
-    public class QueryBuilder : CommandBuilder
+    public class QueryBuilder : ICompleteCommand
     {
         #region Members
         private readonly Filters _filters = new Filters();
         private string _queryTemplate = null;
+        private readonly CommandBuilder _commandBuilder;
         #endregion
 
         #region Properties
@@ -40,8 +41,9 @@ namespace DapperQueryBuilder
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// Where filters will later replace /**where**/ keyword
         /// </summary>
-        public QueryBuilder(IDbConnection cnn) : base(cnn)
+        public QueryBuilder(IDbConnection cnn)
         {
+            _commandBuilder = new CommandBuilder(cnn);
         }
 
         /// <summary>
@@ -54,10 +56,12 @@ namespace DapperQueryBuilder
         /// <param name="query">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "AND filters" (without where) (if any filter is defined).
         /// </param>
-        public QueryBuilder(IDbConnection cnn, FormattableString query) : base(cnn)
+        public QueryBuilder(IDbConnection cnn, FormattableString query)
         {
+            _commandBuilder = new CommandBuilder(cnn);
+
             var parsedStatement = new InterpolatedStatementParser(query);
-            parsedStatement.MergeParameters(this.Parameters);
+            parsedStatement.MergeParameters(_commandBuilder.Parameters);
             _queryTemplate = parsedStatement.Sql;
         }
         #endregion
@@ -68,7 +72,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public virtual QueryBuilder Where(Filter filter)
         {
-            filter.MergeParameters(this.Parameters);
+            filter.MergeParameters(_commandBuilder.Parameters);
             _filters.Add(filter);
             return this;
         }
@@ -78,7 +82,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public virtual QueryBuilder Where(Filters filters)
         {
-            filters.MergeParameters(this.Parameters);
+            filters.MergeParameters(_commandBuilder.Parameters);
             _filters.Add(filters);
             return this;
         }
@@ -98,7 +102,7 @@ namespace DapperQueryBuilder
         /// Does NOT add leading "WHERE" keyword. <br />
         /// Returns null if no filter was defined.
         /// </summary>
-        protected string GetFilters()
+        public string GetFilters()
         {
             if (_filters == null || !_filters.Any())
                 return null;
@@ -109,11 +113,13 @@ namespace DapperQueryBuilder
         }
         #endregion
 
-        #region override Sql
+        #region ICompleteCommand
+
+        #region Sql
         /// <summary>
         /// <inheritdoc />
         /// </summary>
-        public override string Sql
+        public string Sql
         {
             get
             {
@@ -149,6 +155,40 @@ namespace DapperQueryBuilder
             }
         }
         #endregion
+
+        /// <summary>
+        /// Parameters of Query
+        /// </summary>
+        public DynamicParameters Parameters => _commandBuilder.Parameters;
+
+        /// <summary>
+        /// Underlying connection
+        /// </summary>
+        public IDbConnection Connection => _commandBuilder.Connection;
+        #endregion
+
+        /// <summary>
+        /// Appends a statement to the current command. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
+        /// <param name="statement">SQL command</param>
+        public QueryBuilder Append(FormattableString statement)
+        {
+            _commandBuilder.Append(statement); 
+            return this; 
+        }
+
+        /// <summary>
+        /// Appends a statement to the current command, but before statement adds a linebreak. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
+        /// <param name="statement">SQL command</param>
+        public QueryBuilder AppendLine(FormattableString statement)
+        {
+            _commandBuilder.AppendLine(statement);
+            return this;
+        }
+
 
     }
 }

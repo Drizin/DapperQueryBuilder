@@ -42,12 +42,6 @@ namespace DapperQueryBuilder
             Parameters = parsedStatement.Parameters;
             _parametersStr = string.Join(", ", Parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
         }
-        //public Filter(RawString filter)
-        //{
-        //    Sql = filter;
-        //    Parameters = new DynamicParameters();
-        //}
-
         #endregion
 
         #region IFilter

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -10,10 +11,11 @@ namespace DapperQueryBuilder
     /// <summary>
     /// FluentQueryBuilder allows to build queries using a Fluent-API interface
     /// </summary>
-    public class FluentQueryBuilder : QueryBuilder, IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteQuery
+    public class FluentQueryBuilder : IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteCommand
     {
 
         #region Members
+        private readonly QueryBuilder _queryBuilder;
         private readonly List<string> _selectColumns = new List<string>();
         private readonly List<string> _fromTables = new List<string>();
         private readonly List<string> _orderBy = new List<string>();
@@ -30,8 +32,9 @@ namespace DapperQueryBuilder
         /// Should be constructed using .Select(), .From(), .Where(), etc.
         /// </summary>
         /// <param name="cnn"></param>
-        public FluentQueryBuilder(IDbConnection cnn) : base(cnn)
+        public FluentQueryBuilder(IDbConnection cnn)
         {
+            _queryBuilder = new QueryBuilder(cnn);
         }
         #endregion
 
@@ -136,7 +139,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds offset and rowcount clauses
         /// </summary>
-        public ICompleteQuery Limit(int offset, int rowCount)
+        public ICompleteCommand Limit(int offset, int rowCount)
         {
             _offset = offset;
             _rowCount = rowCount;
@@ -149,17 +152,19 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public new IWhereBuilder Where(Filter filter)
+        public IWhereBuilder Where(Filter filter)
         {
-            return (IWhereBuilder)base.Where(filter);
+            _queryBuilder.Where(filter);
+            return this;
         }
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public new IWhereBuilder Where(Filters filters)
+        public IWhereBuilder Where(Filters filters)
         {
-            return (IWhereBuilder)base.Where(filters);
+            _queryBuilder.Where(filters);
+            return this;
         }
 
 
@@ -167,18 +172,21 @@ namespace DapperQueryBuilder
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
-        public new IWhereBuilder Where(FormattableString filter)
+        public IWhereBuilder Where(FormattableString filter)
         {
-            return (IWhereBuilder)base.Where(filter);
+            _queryBuilder.Where(filter);
+            return this;
         }
         #endregion
 
 
-        #region override Sql
+        #region ICompleteCommand
+
+        #region Sql
         /// <summary>
         /// <inheritdoc />
         /// </summary>
-        public override string Sql
+        public string Sql
         {
             get
             {
@@ -193,7 +201,7 @@ namespace DapperQueryBuilder
                 if (_fromTables.Any())
                     finalSql.AppendLine($"{string.Join(Environment.NewLine, _fromTables)}"); //TODO: inner join and left/outer join shortcuts?
 
-                string filters = GetFilters();
+                string filters = _queryBuilder.GetFilters();
                 if (filters != null)
                     finalSql.AppendLine("WHERE " + filters);
 
@@ -209,6 +217,17 @@ namespace DapperQueryBuilder
                 return finalSql.ToString();
             }
         }
+        #endregion
+
+        /// <summary>
+        /// Parameters of Query
+        /// </summary>
+        public DynamicParameters Parameters => _queryBuilder.Parameters;
+
+        /// <summary>
+        /// Underlying connection
+        /// </summary>
+        public IDbConnection Connection => _queryBuilder.Connection;
         #endregion
 
     }

@@ -7,7 +7,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// QueryBuilder which is preparing a SELECT DISTINCT statement
     /// </summary>
-    public interface ISelectDistinctBuilder : ICommandBuilder
+    public interface ISelectDistinctBuilder : ICompleteCommand
     {
         /// <summary>
         /// Adds one column to the select clauses, and defines that query is a SELECT DISTINCT type
