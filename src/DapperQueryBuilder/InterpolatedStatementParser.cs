@@ -121,7 +121,7 @@ namespace DapperQueryBuilder
                 //var direction = System.Data.ParameterDirection.Input;
                 //if (argFormat == "out")
                 //    direction = System.Data.ParameterDirection.Output;
-                Parameters.Add(parmObjectName, arg);
+                Parameters.Add(new ParameterInfo(parmObjectName, arg));
                 sb.Append(parmName);
             }
             string lastPart = format.Substring(lastPos).Replace("{{", "{").Replace("}}", "}");

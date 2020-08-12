@@ -73,7 +73,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public CommandBuilder AddParameter(string parameterName, object parameterValue = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
         {
-            _parameters.Add(parameterName, parameterValue, dbType, direction, size, precision, scale);
+            _parameters.Add(new ParameterInfo(parameterName, parameterValue, dbType, direction, size, precision, scale));
             _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
             return this;
         }
@@ -93,19 +93,9 @@ namespace DapperQueryBuilder
 
             foreach (var prop in props)
             {
-                _parameters.Add(prop.Key, prop.Value.GetValue(obj, new object[] { }));
+                _parameters.Add(new ParameterInfo(prop.Key, prop.Value.GetValue(obj, new object[] { })));
             }
             _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
-        }
-
-        /// <summary>
-        /// Adds single parameter to current Command Builder. <br />
-        /// Checks for name clashes, and will rename parameter if necessary. <br />
-        /// If parameter is renamed the new name will be returned, else returns null.
-        /// </summary>
-        protected string MergeParameter(string parameterName, object parameterValue)
-        {
-            return _parameters.MergeParameter(parameterName, parameterValue);
         }
         #endregion
 

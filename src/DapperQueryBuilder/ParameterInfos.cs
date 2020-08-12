@@ -54,47 +54,10 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Add a parameter to this dynamic parameter list.
         /// </summary>
-        /// <param name="name">The name of the parameter.</param>
-        /// <param name="value">The value of the parameter.</param>
-        /// <param name="dbType">The type of the parameter.</param>
-        /// <param name="direction">The in or out direction of the parameter.</param>
-        /// <param name="size">The size of the parameter.</param>
-        public void Add(string name, object value, DbType? dbType, ParameterDirection? direction, int? size)
+        public void Add(ParameterInfo parameter)
         {
-            this[name] = new ParameterInfo()
-            {
-                Name = name,
-                Value = value,
-                ParameterDirection = direction ?? ParameterDirection.Input,
-                DbType = dbType,
-                Size = size
-            };
+            this[parameter.Name] = parameter;
         }
-
-        /// <summary>
-        /// Add a parameter to this dynamic parameter list.
-        /// </summary>
-        /// <param name="name">The name of the parameter.</param>
-        /// <param name="value">The value of the parameter.</param>
-        /// <param name="dbType">The type of the parameter.</param>
-        /// <param name="direction">The in or out direction of the parameter.</param>
-        /// <param name="size">The size of the parameter.</param>
-        /// <param name="precision">The precision of the parameter.</param>
-        /// <param name="scale">The scale of the parameter.</param>
-        public void Add(string name, object value = null, DbType? dbType = null, ParameterDirection? direction = null, int? size = null, byte? precision = null, byte? scale = null)
-        {
-            this[name] = new ParameterInfo()
-            {
-                Name = name,
-                Value = value,
-                ParameterDirection = direction ?? ParameterDirection.Input,
-                DbType = dbType,
-                Size = size,
-                Precision = precision,
-                Scale = scale
-            };
-        }
-
 
         /// <summary>
         /// Get parameter value
@@ -119,9 +82,70 @@ namespace DapperQueryBuilder
         {
             var dapperParameters = DapperParameters;
 
+            // Update output and return parameters back
             foreach (var oparm in this.Values.Where(p => p.ParameterDirection != ParameterDirection.Input))
-                this[oparm.Name].Value = dapperParameters.Get<object>(oparm.Name);
+            {
+                oparm.Value = dapperParameters.Get<object>(oparm.Name);
+                oparm.OutputCallback?.Invoke(oparm.Value);
+            }
         }
+
+
+        #region Add Existing Parameter
+        /// <summary>
+        /// Merges single parameter into this list. <br />
+        /// Checks for name clashes, and will rename parameter if necessary. <br />
+        /// If parameter is renamed the new name will be returned, else returns null.
+        /// </summary>
+        public string MergeParameter(ParameterInfo parameter)
+        {
+            string newParameterName = parameter.Name;
+            int _autoNamedParametersCount = 0;
+            while (ParameterNames.Contains(newParameterName))
+            {
+                newParameterName = "p" + _autoNamedParametersCount.ToString();
+                _autoNamedParametersCount++;
+            }
+
+            // Create a copy, it's safer
+            ParameterInfo newParameter = new ParameterInfo(
+                name: newParameterName, 
+                value: parameter.Value,
+                dbType: parameter.DbType, 
+                direction: parameter.ParameterDirection,
+                size: parameter.Size, 
+                precision: parameter.Precision,
+                scale: parameter.Scale
+            );
+            newParameter.OutputCallback = parameter.OutputCallback;
+
+            Add(newParameter);
+            if (newParameterName != parameter.Name)
+                return newParameterName;
+            return null;
+        }
+
+        /// <summary>
+        /// Merges multiple parameters into this list. <br />
+        /// Checks for name clashes, and will rename parameters if necessary. <br />
+        /// If some parameter is renamed the returned Sql statement will containg the original sql replaced with new names, else (if nothing changed) returns null. <br />
+        /// </summary>
+        public string MergeParameters(ParameterInfos parameters, string sql)
+        {
+            string newSql = sql;
+            foreach (var parameter in parameters.Values)
+            {
+                string newParameterName = MergeParameter(parameter);
+                if (newParameterName != null)
+                    newSql = newSql.Replace("@" + parameter.Name, "@" + newParameterName);
+            }
+            if (newSql != sql)
+                return newSql;
+            return null;
+        }
+
+        #endregion
+
 
     }
 
