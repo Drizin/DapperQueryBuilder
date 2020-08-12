@@ -159,7 +159,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Query
         /// </summary>
-        public DynamicParameters Parameters => _commandBuilder.Parameters;
+        public ParameterInfos Parameters => _commandBuilder.Parameters;
 
         /// <summary>
         /// Underlying connection

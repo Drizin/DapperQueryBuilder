@@ -24,7 +24,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Dictionary of Dapper parameters
         /// </summary>
-        public DynamicParameters Parameters { get; set; }
+        public ParameterInfos Parameters { get; set; }
         
         private string _parametersStr;
         #endregion
@@ -52,7 +52,7 @@ namespace DapperQueryBuilder
         }
 
         /// <inheritdoc/>
-        public void MergeParameters(DynamicParameters target)
+        public void MergeParameters(ParameterInfos target)
         {
             string newSql = target.MergeParameters(Parameters, Sql);
             if (newSql != null)

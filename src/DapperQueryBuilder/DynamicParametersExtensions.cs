@@ -10,14 +10,14 @@ namespace DapperQueryBuilder
     /// <summary>
     /// Extensions over DynamicParamters
     /// </summary>
-    public static class DynamicParametersExtensions
+    public static class ParameterInfosExtensions
     {
         /// <summary>
-        /// Adds single parameter to DynamicParameters. <br />
+        /// Adds single parameter to ParameterInfos. <br />
         /// Checks for name clashes, and will rename parameter if necessary. <br />
         /// If parameter is renamed the new name will be returned, else returns null.
         /// </summary>
-        public static string MergeParameter(this DynamicParameters target, string parameterName, object parameterValue)
+        public static string MergeParameter(this ParameterInfos target, string parameterName, object parameterValue)
         {
             string newParameterName = parameterName;
             int _autoNamedParametersCount = 0;
@@ -38,7 +38,7 @@ namespace DapperQueryBuilder
         /// If some parameter is renamed the returned Sql statement will containg the original sql replaced with new names, else (if nothing changed) returns null. <br />
         /// This method does NOT append Parser SQL to CommandBuilder SQL (you may want to save this SQL statement elsewhere)
         /// </summary>
-        public static string MergeParameters(this DynamicParameters target, DynamicParameters parameters, string sql)
+        public static string MergeParameters(this ParameterInfos target, ParameterInfos parameters, string sql)
         {
             string newSql = sql;
             foreach (var parameterName in parameters.ParameterNames)

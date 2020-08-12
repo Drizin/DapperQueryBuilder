@@ -222,7 +222,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Query
         /// </summary>
-        public DynamicParameters Parameters => _queryBuilder.Parameters;
+        public ParameterInfos Parameters => _queryBuilder.Parameters;
 
         /// <summary>
         /// Underlying connection

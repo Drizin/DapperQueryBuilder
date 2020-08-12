@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace DapperQueryBuilder
     {
         #region Members
         private readonly IDbConnection _cnn;
-        private readonly DynamicParameters _parameters;
+        private readonly ParameterInfos _parameters;
         private string _parametersStr;
 
         private readonly StringBuilder _command;
@@ -48,7 +49,7 @@ namespace DapperQueryBuilder
         {
             _cnn = cnn;
             _command = new StringBuilder();
-            _parameters = new DynamicParameters();
+            _parameters = new ParameterInfos();
         }
 
         /// <summary>
@@ -79,12 +80,21 @@ namespace DapperQueryBuilder
 
 
         /// <summary>
-        /// Adds the properties of an object (like a POCO) to current Command Builder. Does not check for name clashes.
+        /// Adds all public properties of an object (like a POCO) as parameters of the current Command Builder. <br />
+        /// This is like Dapper templates: useful when you're passing an object with multiple properties and you'll reference those properties in the SQL statement. <br />
+        /// This method does not check for name clashes against previously added parameters. <br />
         /// </summary>
-        /// <param name="param"></param>
-        public void AddDynamicParams(object param)
+        public void AddObjectProperties(object obj)
         {
-            _parameters.AddDynamicParams(param);
+            Dictionary<string, PropertyInfo> props = 
+                obj.GetType()
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .ToDictionary(prop => prop.Name, prop => prop);
+
+            foreach (var prop in props)
+            {
+                _parameters.Add(prop.Key, prop.Value.GetValue(obj, new object[] { }));
+            }
             _parametersStr = string.Join(", ", _parameters.ParameterNames.ToList().Select(n => "@" + n + "='" + Convert.ToString(Parameters.Get<dynamic>(n)) + "'"));
         }
 
@@ -214,6 +224,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Command
         /// </summary>
-        public virtual DynamicParameters Parameters => _parameters;
+        public virtual ParameterInfos Parameters => _parameters;
+
     }
 }

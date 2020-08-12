@@ -19,7 +19,7 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Command
         /// </summary>
-        DynamicParameters Parameters { get; }
+        ParameterInfos Parameters { get; }
 
         /// <summary>
         /// Underlying connection

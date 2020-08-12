@@ -82,7 +82,7 @@ namespace DapperQueryBuilder
         }
 
         /// <inheritdoc/>
-        public void MergeParameters(DynamicParameters target)
+        public void MergeParameters(ParameterInfos target)
         {
             foreach(IFilter filter in this)
             {
@@ -92,16 +92,19 @@ namespace DapperQueryBuilder
 
         /// <summary>
         /// If you're using Filters in standalone structure (without QueryBuilder), <br />
-        /// you can just "build" the filters over a DynamicParameters and get the string for the filters (with leading WHERE)
+        /// you can just "build" the filters over a ParameterInfos and get the string for the filters (with leading WHERE)
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
         public string BuildFilters(DynamicParameters target)
         {
+            ParameterInfos parameters = new ParameterInfos();
             foreach (IFilter filter in this)
             {
-                filter.MergeParameters(target);
+                filter.MergeParameters(parameters);
             }
+            foreach (var parameter in parameters.Values)
+                target.Add(parameter.Name, parameter.Value, parameter.DbType, parameter.ParameterDirection, parameter.Size);
             StringBuilder sb = new StringBuilder();
             WriteFilter(sb);
             if (sb.Length > 0)

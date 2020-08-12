@@ -21,6 +21,6 @@ namespace DapperQueryBuilder
         /// If some parameter is renamed the underlying Sql statement will have the new parameter names replaced by their new names.<br />
         /// This method does NOT append Parser SQL to CommandBuilder SQL (you may want to save this SQL statement elsewhere)
         /// </summary>
-        void MergeParameters(DynamicParameters target);
+        void MergeParameters(ParameterInfos target);
     }
 }
