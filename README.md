@@ -225,11 +225,18 @@ Instead of using Dapper `DbString` class, you can just pass explicit type for yo
 // start your basic query
 string productName = "Mountain%";
 
-var query = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:nvarchar(20)}");
+var query = cn.QueryBuilder($@"
+    SELECT * FROM [Production].[Product] p 
+    WHERE [Name] LIKE {productName:nvarchar(20)}");
 ```
 
 You can use sql types like `varchar(size)`, `nvarchar(size)`, `char(size)`, `nchar(size)`, `varchar(MAX)`, `nvarchar(MAX)`.
-(If your database does not use this exact types, Dapper will convert them to your database. We pass DbStrings to Dapper and use the hints above to define if they `IsAnsi` and `IsFixedLength`.
+(If your database does not use this exact types, Dapper will convert them to your database. We pass DbStrings to Dapper and use the hints above to define if they `IsAnsi` and `IsFixedLength`.  
+
+`nvarchar` and `nchar` are unicode strings, while `varchar` and `char` are ansi strings.  
+`nvarchar` and `varchar` are variable-length strings, while `nchar` and `char` are fixed-length strings.
+
+
 
 
 ## IN lists
