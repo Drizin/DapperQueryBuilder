@@ -60,15 +60,25 @@ namespace DapperQueryBuilder.Tests
         {
             string productName = "Mountain%";
 
+            // By default strings are Unicode (nvarchar) and size is max between DbString.DefaultLength (4000) or string
             var cmd1 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName}");
             var products = cmd1.Query<Product>();
             Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.NVarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == Dapper.DbString.DefaultLength);
 
 
+            // Unless we specify it's an Ansi (non-unicode) string
             var cmd2 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:AnsiString}");
             products = cmd2.Query<Product>();
             Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.VarChar);
             Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == Dapper.DbString.DefaultLength);
+
+            // If string is larger than DbString.DefaultLength (4000), size will be string size
+            productName = new string('c', 4010);
+            var cmd3 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:AnsiString}");
+            products = cmd3.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.VarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == 4010);
         }
 
         [Test]
@@ -86,6 +96,40 @@ namespace DapperQueryBuilder.Tests
             products = cmd2.Query<Product>();
             Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.VarChar);
             Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == 30);
+        }
+
+        [Test]
+        public void TestExplicitTypes4()
+        {
+            string productName = "Mountain%";
+
+            var cmd1 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:nvarchar()}");
+            var products = cmd1.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.NVarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == Dapper.DbString.DefaultLength);
+
+
+            var cmd2 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:varchar()}");
+            products = cmd2.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.VarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == Dapper.DbString.DefaultLength);
+        }
+
+        [Test]
+        public void TestExplicitTypes5()
+        {
+            string productName = "Mountain%";
+
+            var cmd1 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:nchar()}");
+            var products = cmd1.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.NChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == productName.Length);
+
+
+            var cmd2 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] LIKE {productName:char(20)}");
+            products = cmd2.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.Char);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == 20);
         }
 
 

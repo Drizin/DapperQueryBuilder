@@ -148,7 +148,7 @@ namespace DapperQueryBuilder
                 Match m;
                 foreach (var f in argFormats)
                 {
-                    if (arg is string && (m = regexDbTypeString.Match(f)) != null && m.Success)
+                    if (arg is string && (m = regexDbTypeString.Match(f)) != null && m.Success) // String(maxlength) / nvarchar(maxlength) / String / nvarchar
                         arg = new DbString() 
                         { 
                             IsAnsi = false, 
@@ -156,7 +156,7 @@ namespace DapperQueryBuilder
                             Value = (string)arg, 
                             Length = (string.IsNullOrEmpty(m.Groups["maxlength"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["maxlength"].Value)) 
                         };
-                    else if (arg is string && (m = regexDbTypeAnsiString.Match(f)) != null && m.Success)
+                    else if (arg is string && (m = regexDbTypeAnsiString.Match(f)) != null && m.Success) // AnsiString(maxlength) / varchar(maxlength) / AnsiString / varchar
                         arg = new DbString()
                         {
                             IsAnsi = true,
@@ -164,23 +164,23 @@ namespace DapperQueryBuilder
                             Value = (string)arg,
                             Length = (string.IsNullOrEmpty(m.Groups["maxlength"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["maxlength"].Value))
                         };
-                    else if (arg is string && (m = regexDbTypeStringFixedLength.Match(f)) != null && m.Success)
+                    else if (arg is string && (m = regexDbTypeStringFixedLength.Match(f)) != null && m.Success) // StringFixedLength(length) / nchar(length) / StringFixedLength / nchar
                         arg = new DbString()
                         {
                             IsAnsi = false,
                             IsFixedLength = true,
                             Value = (string)arg,
-                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["length"].Value))
+                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? ((string)arg).Length : int.Parse(m.Groups["length"].Value))
                         };
-                    else if (arg is string && (m = regexDbTypeAnsiStringFixedLength.Match(f)) != null && m.Success)
+                    else if (arg is string && (m = regexDbTypeAnsiStringFixedLength.Match(f)) != null && m.Success) // AnsiStringFixedLength(length) / char(length) / AnsiStringFixedLength / char
                         arg = new DbString()
                         {
                             IsAnsi = true,
                             IsFixedLength = true,
                             Value = (string)arg,
-                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["length"].Value))
+                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? ((string)arg).Length : int.Parse(m.Groups["length"].Value))
                         };
-                    else if (arg is string && (m = regexDbTypeText.Match(f)) != null && m.Success)
+                    else if (arg is string && (m = regexDbTypeText.Match(f)) != null && m.Success) // text / varchar(MAX) / varchar(-1)
                         arg = new DbString()
                         {
                             IsAnsi = false,
@@ -188,7 +188,7 @@ namespace DapperQueryBuilder
                             Value = (string)arg,
                             Length = int.MaxValue
                         };
-                    else if (arg is string && (m = regexDbTypeNText.Match(f)) != null && m.Success)
+                    else if (arg is string && (m = regexDbTypeNText.Match(f)) != null && m.Success) // ntext / nvarchar(MAX) / nvarchar(-1)
                         arg = new DbString()
                         {
                             IsAnsi = true,
