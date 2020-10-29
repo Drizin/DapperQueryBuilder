@@ -205,12 +205,12 @@ namespace DapperQueryBuilder
                 if (filters != null)
                     finalSql.AppendLine("WHERE " + filters);
 
-                if (_orderBy.Any())
-                    finalSql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
                 if (_groupBy.Any())
                     finalSql.AppendLine($"GROUP BY {string.Join(", ", _groupBy)}");
                 if (_having.Any())
                     finalSql.AppendLine($"HAVING {string.Join(" AND ", _having)}");
+                if (_orderBy.Any())
+                    finalSql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
                 if (_rowCount != null)
                     finalSql.AppendLine($"OFFSET {_offset ?? 0} ROWS FETCH NEXT {_rowCount} ROWS ONLY"); // TODO: PostgreSQL? "LIMIT row_count OFFSET offset"
 

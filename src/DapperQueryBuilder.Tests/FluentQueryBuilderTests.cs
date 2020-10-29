@@ -242,6 +242,40 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
                 ;
         }
 
+        [Test]
+        public void GroupByOrderByQueryTest()
+        {
+            var q = cn.QueryBuilder()
+                .Select($"cat.[Name] as [Category]")
+                .Select($"AVG(p.[ListPrice]) as [AveragePrice]")
+                .From($"[Production].[Product] p")
+                .From($"LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
+                .From($"LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]")
+                .Where($"p.[ListPrice] BETWEEN { 0 } and { 1000 }")
+                .Where($"cat.[Name] IS NOT NULL")
+                .GroupBy($"cat.[Name]")
+                .Having($"COUNT(*)>{5}")
+                .OrderBy($"cat.[Name]");
+
+            string expected =
+                @"SELECT cat.[Name] as [Category], AVG(p.[ListPrice]) as [AveragePrice]
+FROM [Production].[Product] p
+LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]
+WHERE p.[ListPrice] BETWEEN @p0 and @p1 AND cat.[Name] IS NOT NULL
+GROUP BY cat.[Name]
+HAVING COUNT(*)>@p2
+ORDER BY cat.[Name]
+";
+
+            Assert.AreEqual(expected, q.Sql);
+
+            var results = q.Query();
+
+            Assert.That(results.Any());
+
+        }
+
 
 
     }
