@@ -64,6 +64,14 @@ namespace DapperQueryBuilder
         {
             return command.Connection.QuerySingle<T>(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as T.
+        /// </summary>
+        public static T QuerySingleOrDefault<T>(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefault<T>(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
         #endregion
 
         #region Dapper (ICompleteQuery<T>.Query() dynamic)
@@ -97,6 +105,14 @@ namespace DapperQueryBuilder
         public static dynamic QuerySingle(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return command.Connection.QuerySingle(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as dynamic objects.
+        /// </summary>
+        public static dynamic QuerySingleOrDefault(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefault(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
         #endregion
 
@@ -132,6 +148,14 @@ namespace DapperQueryBuilder
         {
             return command.Connection.QuerySingle(type: type, sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as type.
+        /// </summary>
+        public static object QuerySingleOrDefault(this ICompleteCommand command, Type type, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefault(type: type, sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
         #endregion
 
         #region Dapper (ICompleteQuery<T>.QueryAsync<T>)
@@ -163,6 +187,13 @@ namespace DapperQueryBuilder
         public static Task<T> QuerySingleAsync<T>(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return command.Connection.QuerySingleAsync<T>(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as T.
+        /// </summary>
+        public static Task<T> QuerySingleOrDefaultAsync<T>(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefaultAsync<T>(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
         #endregion
 
@@ -198,6 +229,14 @@ namespace DapperQueryBuilder
         {
             return command.Connection.QuerySingleAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as dynamic objects.
+        /// </summary>
+        public static Task<dynamic> QuerySingleOrDefaultAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefaultAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
         #endregion
 
         #region Dapper (ICompleteQuery<T>.QueryAsync<object>)
@@ -229,6 +268,13 @@ namespace DapperQueryBuilder
         public static Task<object> QuerySingleAsync(this ICompleteCommand command, Type type, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
             return command.Connection.QuerySingleAsync(type: type, sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+        /// <summary>
+        /// Executes the query (using Dapper), returning the data typed as type.
+        /// </summary>
+        public static Task<object> QuerySingleOrDefaultAsync(this ICompleteCommand command, Type type, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QuerySingleOrDefaultAsync(type: type, sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
         #endregion
 
