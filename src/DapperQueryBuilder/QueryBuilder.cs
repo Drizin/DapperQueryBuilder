@@ -19,7 +19,6 @@ namespace DapperQueryBuilder
     {
         #region Members
         private readonly Filters _filters = new Filters();
-        private string _queryTemplate = null;
         private readonly CommandBuilder _commandBuilder;
         #endregion
 
@@ -58,11 +57,7 @@ namespace DapperQueryBuilder
         /// </param>
         public QueryBuilder(IDbConnection cnn, FormattableString query)
         {
-            _commandBuilder = new CommandBuilder(cnn);
-
-            var parsedStatement = new InterpolatedStatementParser(query);
-            parsedStatement.MergeParameters(_commandBuilder.Parameters);
-            _queryTemplate = parsedStatement.Sql;
+            _commandBuilder = new CommandBuilder(cnn, query);
         }
         #endregion
 
@@ -126,20 +121,19 @@ namespace DapperQueryBuilder
                 StringBuilder finalSql = new StringBuilder();
 
                 // If Query Template is provided, we assume it contains both SELECT and FROMs
-                if (_queryTemplate != null)
-                    finalSql.Append(_queryTemplate);
+                if (_commandBuilder.Sql != null)
+                    finalSql.Append(_commandBuilder.Sql);
 
                 string filters = GetFilters();
                 if (filters != null)
                 {
-
-                    if (_queryTemplate != null && _queryTemplate.Contains("/**where**/"))
+                    if (finalSql.Length > 0 && finalSql.ToString().Contains("/**where**/"))
                         finalSql.Replace("/**where**/", "WHERE " + filters);
-                    else if (_queryTemplate != null && _queryTemplate.Contains("{where}"))
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("{where}"))
                         finalSql.Replace("{where}", "WHERE " + filters);
-                    else if (_queryTemplate != null && _queryTemplate.Contains("/**filters**/"))
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("/**filters**/"))
                         finalSql.Replace("/**filters**/", "AND " + filters);
-                    else if (_queryTemplate != null && _queryTemplate.Contains("{filters}"))
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("{filters}"))
                         finalSql.Replace("{filters}", "AND " + filters);
                     else
                     {
