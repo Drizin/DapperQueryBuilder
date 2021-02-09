@@ -129,7 +129,7 @@ namespace DapperQueryBuilder
 
 			if ( existingParam != null )
 			{
-				return null;
+				return existingParam.Name;
 			}
 
 			string newParameterName = "p" + ParameterNames.Count;
