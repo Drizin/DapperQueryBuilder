@@ -118,7 +118,7 @@ namespace DapperQueryBuilder
                 List<string> argFormats = argFormat.Split(new char[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries).Select(f => f.Trim()).ToList();
                 object arg = arguments[argPos];
 
-                if (arg is string && argFormats.Contains("raw")) // example: {nameof(Product.Name):raw}  -> won't be parametrized, we just emit raw string!
+                if (argFormats.Contains("raw")) // example: {nameof(Product.Name):raw}  -> won't be parametrized, we just emit raw string!
                 {
                     sb.Append(sql);
                     sb.Append(arg);
