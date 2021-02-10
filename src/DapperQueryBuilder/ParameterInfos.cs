@@ -137,10 +137,10 @@ namespace DapperQueryBuilder
             {
                 string newParameterName = MergeParameter(parameter);
                 if (newParameterName != null)
-                    newSql = newSql.Replace("@" + parameter.Name, "@" + newParameterName);
+                    newSql = newSql.Replace("@" + parameter.Name, "DQB:@:DBQ" + newParameterName);
             }
             if (newSql != sql)
-                return newSql;
+                return newSql.Replace( "DQB:@:DBQ", "@" );
             return null;
         }
 
