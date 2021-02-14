@@ -127,7 +127,7 @@ namespace DapperQueryBuilder
                         throw new Exception($"Can't convert {parameter.Name} ({parameter.Value}) to type {typeof(TP).Name}", ex);
                     }
                 }
-                setter(target, (TP)o); // TP (property type) must match the return value
+                setter(target, val); // TP (property type) must match the return value
             });
 
             return parameter;

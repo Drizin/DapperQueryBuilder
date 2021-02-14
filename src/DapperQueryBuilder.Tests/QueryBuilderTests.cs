@@ -15,7 +15,7 @@ namespace DapperQueryBuilder.Tests
         [SetUp]
         public void Setup()
         {
-            string connectionString = @"Data Source=LENOVOFLEX5\SQLEXPRESS;
+            string connectionString = @"Data Source=LENOVOFLEX5;
                             Initial Catalog=AdventureWorks;
                             Integrated Security=True;";
             cn = new SqlConnection(connectionString);
