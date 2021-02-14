@@ -342,6 +342,21 @@ ORDER BY [ProductId]", query.Sql);
         }
 
 
+        [Test]
+        public void TestQueryBuilderWithAppends()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .QueryBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {productName}");
+            query.AppendLine($"AND [ProductSubcategoryID] = {subCategoryId} ORDER BY {2}");
+            Assert.AreEqual(@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1 ORDER BY @p2", query.Sql);
+
+            //var products = query.Query<Product>();
+        }
+
 
     }
 }

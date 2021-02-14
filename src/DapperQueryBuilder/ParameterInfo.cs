@@ -10,6 +10,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// SQL parameter which is passed to Dapper
     /// </summary>
+    [System.Diagnostics.DebuggerDisplay("{Name,nq} = {Value,nq}")]
     public class ParameterInfo
     {
         #region Members
