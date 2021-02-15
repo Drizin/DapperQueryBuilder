@@ -141,10 +141,10 @@ namespace DapperQueryBuilder
             }
             if (renamedParameters.Any())
             {
-                Regex matchParametersRegex = new Regex("(?:\\s|\\b) (" + string.Join("|", renamedParameters.Select(p=>p.Key)) + ") (?:\\b|\\s*)",
+                Regex matchParametersRegex = new Regex("(?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b) (" + string.Join("|", renamedParameters.Select(p=>p.Key)) + ") (?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b)",
                     RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
                 string newSql = matchParametersRegex.Replace(sql, match => {
-                    Group group = match.Groups[1];
+                    Group group = match.Groups[match.Groups.Count-1]; // last match is the inner parameter
                     string replace = renamedParameters[group.Value];
                     return String.Format("{0}{1}{2}", match.Value.Substring(0, group.Index - match.Index), replace, match.Value.Substring(group.Index - match.Index + group.Length));
                 });
