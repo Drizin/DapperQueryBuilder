@@ -373,5 +373,31 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
         }
 
 
+        [Test]
+        public void TestRepeatedParameters()
+        {
+            string username = "rdrizin";
+            int subCategoryId = 12;
+            int? categoryId = null;
+
+            var query = cn.QueryBuilder($@"SELECT * FROM [table1] WHERE ([Name]={username} or [Author]={username}");
+            query.Append($"or [Creator]={username})");
+            query.Append($"AND ([ProductSubcategoryID]={subCategoryId}");
+            query.Append($"OR [ProductSubcategoryID]={categoryId}");
+            query.Append($"OR [ProductCategoryID]={subCategoryId}");
+            query.Append($"OR [ProductCategoryID]={categoryId})");
+
+            Assert.AreEqual(@"SELECT * FROM [table1] WHERE ([Name]=@p0 or [Author]=@p0"
+                + " or [Creator]=@p0)"
+                + " AND ([ProductSubcategoryID]=@p1"
+                + " OR [ProductSubcategoryID]=@p2"
+                + " OR [ProductCategoryID]=@p1"
+                + " OR [ProductCategoryID]=@p2)"
+                , query.Sql);
+            int? val = query.Parameters.Get<int?>("p2");
+            Assert.AreEqual(val, null);
+       }
+
+
     }
 }
