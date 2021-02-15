@@ -1,6 +1,7 @@
 using Dapper;
 using NUnit.Framework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -16,7 +17,7 @@ namespace DapperQueryBuilder.Tests
         [SetUp]
         public void Setup()
         {
-            string connectionString = @"Data Source=LENOVOFLEX5\SQLEXPRESS;
+            string connectionString = @"Data Source=LENOVOFLEX5;
                             Initial Catalog=AdventureWorks;
                             Integrated Security=True;";
             cn = new SqlConnection(connectionString);
@@ -50,14 +51,15 @@ namespace DapperQueryBuilder.Tests
                 ORDER BY [ProductId]");
 
             Assert.AreEqual(@"
-                SELECT * FROM [Production].[Product]
-                WHERE
-                [Name] LIKE @p0
-                AND [ProductSubcategoryID] = @p1
-                ORDER BY [ProductId]", query.Sql);
+SELECT * FROM [Production].[Product]
+WHERE
+[Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1
+ORDER BY [ProductId]".TrimStart(), query.Sql);
 
             var products = query.Query<Product>();
         }
+
 
         [Test]
         public void TestNameof()
@@ -74,11 +76,11 @@ namespace DapperQueryBuilder.Tests
                 ORDER BY [ProductId]");
 
             Assert.AreEqual(@"
-                SELECT * FROM [Production].[Product]
-                WHERE
-                [Name] LIKE @p0
-                AND [ProductSubcategoryID] = @p1
-                ORDER BY [ProductId]", query.Sql);
+SELECT * FROM [Production].[Product]
+WHERE
+[Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1
+ORDER BY [ProductId]".TrimStart(), query.Sql);
 
             var products = query.Query<Product>();
         }
@@ -152,15 +154,35 @@ ORDER BY [ProductId]", query.Sql);
             int affected = q.Execute();
         }
 
+        public class MyPoco { public int MyValue { get; set; } }
 
         [Test]
-        public void TestStoredProcedure2()
+        public void TestStoredProcedureOutput()
         {
-            var q = cn.CommandBuilder($"[dbo].[uspLogError]")
-                .AddParameter("ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue)
-                .AddParameter("ErrorLogID ", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            int affected = q.Execute(commandType: CommandType.StoredProcedure);
-            int returnValue = q.Parameters.Get<int>("ReturnValue");
+            /*
+                CREATE PROCEDURE [Test]
+                    @Input1 [int], 
+                    @Output1 [int] OUTPUT
+                AS
+                BEGIN
+	                SET @Output1 = 2
+                END;
+                GO
+            */
+
+            MyPoco poco = new MyPoco();
+
+            var cmd = cn.CommandBuilder($"[dbo].[Test]")
+                .AddParameter("Input1", dbType: DbType.Int32);
+            //.AddParameter("Output1",  dbType: DbType.Int32, direction: ParameterDirection.Output);
+            //var getter = ParameterInfos.GetSetter((MyPoco p) => p.MyValue);
+            cmd.Parameters.Add(ParameterInfo.CreateOutputParameter("Output1", poco, p => p.MyValue, ParameterInfo.OutputParameterDirection.Output, size: 4));
+            int affected = cmd.Execute(commandType: CommandType.StoredProcedure);
+
+            string outputValue = cmd.Parameters.Get<string>("Output1"); // why is this being returned as string? just because I didn't provide type above?
+            Assert.AreEqual(outputValue, "2");
+
+            Assert.AreEqual(poco.MyValue, 2);
         }
 
         [Test]
@@ -319,6 +341,36 @@ ORDER BY [ProductId]", query.Sql);
             Assert.AreEqual(expected, cmd.Sql);
         }
 
+
+        [Test]
+        public void TestQueryBuilderWithAppends()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .QueryBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {productName}");
+            query.AppendLine($"AND [ProductSubcategoryID] = {subCategoryId} ORDER BY {2}");
+            Assert.AreEqual(@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0
+AND [ProductSubcategoryID] = @p1 ORDER BY @p2", query.Sql);
+
+            //var products = query.Query<Product>();
+        }
+
+        [Test]
+        public void TestQueryBuilderWithAppends2()
+        {
+            string productName = "%mountain%";
+            int subCategoryId = 12;
+
+            var query = cn
+                .QueryBuilder($@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE {productName}");
+            query.AppendLine($"AND [ProductSubcategoryID]={subCategoryId} ORDER BY {2}");
+            Assert.AreEqual(@"SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0
+AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
+
+            //var products = query.Query<Product>();
+        }
 
 
     }

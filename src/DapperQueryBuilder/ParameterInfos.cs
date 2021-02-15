@@ -84,7 +84,7 @@ namespace DapperQueryBuilder
 			}
 		}
 		
-		/// <summary>
+        /// <summary>
         /// Get parameter value
         /// </summary>
         public T Get<T>(string key) => (T)this[key].Value;
@@ -157,15 +157,24 @@ namespace DapperQueryBuilder
         /// </summary>
         public string MergeParameters(ParameterInfos parameters, string sql)
         {
-            string newSql = sql;
+            Dictionary<string, string> renamedParameters = new Dictionary<string, string>();
             foreach (var parameter in parameters.Values)
             {
                 string newParameterName = MergeParameter(parameter);
                 if (newParameterName != null)
-                    newSql = newSql.Replace("@" + parameter.Name, "DQB:@:DBQ" + newParameterName);
+                    renamedParameters.Add("@" + parameter.Name, "@" + newParameterName);
             }
-            if (newSql != sql)
-                return newSql.Replace( "DQB:@:DBQ", "@" );
+            if (renamedParameters.Any())
+            {
+                Regex matchParametersRegex = new Regex("(?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b) (" + string.Join("|", renamedParameters.Select(p=>p.Key)) + ") (?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b)",
+                    RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+                string newSql = matchParametersRegex.Replace(sql, match => {
+                    Group group = match.Groups[match.Groups.Count-1]; // last match is the inner parameter
+                    string replace = renamedParameters[group.Value];
+                    return String.Format("{0}{1}{2}", match.Value.Substring(0, group.Index - match.Index), replace, match.Value.Substring(group.Index - match.Index + group.Length));
+                });
+                return newSql;
+            }
             return null;
         }
 

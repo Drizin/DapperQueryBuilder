@@ -10,6 +10,7 @@ namespace DapperQueryBuilder
     /// <summary>
     /// SQL parameter which is passed to Dapper
     /// </summary>
+    [System.Diagnostics.DebuggerDisplay("{Name,nq} = {Value,nq}")]
     public class ParameterInfo
     {
         #region Members
@@ -127,7 +128,7 @@ namespace DapperQueryBuilder
                         throw new Exception($"Can't convert {parameter.Name} ({parameter.Value}) to type {typeof(TP).Name}", ex);
                     }
                 }
-                setter(target, (TP)o); // TP (property type) must match the return value
+                setter(target, val); // TP (property type) must match the return value
             });
 
             return parameter;
