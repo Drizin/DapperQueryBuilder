@@ -125,7 +125,12 @@ namespace DapperQueryBuilder
         public string MergeParameter(ParameterInfo parameter)
         {
             var existingParam =
-                Values.FirstOrDefault( p => p.Value == parameter.Value && p.DbType == parameter.DbType && p.ParameterDirection == parameter.ParameterDirection && parameter.ParameterDirection == ParameterDirection.Input );
+                Values.FirstOrDefault(p =>
+                    p.DbType == parameter.DbType 
+                    && p.ParameterDirection == parameter.ParameterDirection 
+                    && parameter.ParameterDirection == ParameterDirection.Input
+                    && ((p.Value == null && parameter.Value == null) || (p.Value!=null && p.Value.Equals(parameter.Value)))
+                    );
 
             if ( existingParam != null )
             {

@@ -396,7 +396,10 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
                 , query.Sql);
             int? val = query.Parameters.Get<int?>("p2");
             Assert.AreEqual(val, null);
-       }
+
+            int val2 = query.Parameters.Get<int>("p1");
+            Assert.AreEqual(val2, 12);
+        }
 
 
     }
