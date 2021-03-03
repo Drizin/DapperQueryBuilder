@@ -65,7 +65,12 @@ namespace DapperQueryBuilder
         public string Add( object value, DbType? dbType = null, ParameterDirection? direction = null )
         {
             var existingParam =
-                Values.FirstOrDefault( p => p.Value == value && p.DbType == dbType && p.ParameterDirection == direction && direction == ParameterDirection.Input );
+                Values.FirstOrDefault(p =>
+                    p.DbType == dbType 
+                    && p.ParameterDirection == direction 
+                    && direction == ParameterDirection.Input
+                    && ((p.Value == null && value == null) || (p.Value!=null && p.Value.Equals(value)))
+                    );
 
             if ( existingParam != null )
             {
