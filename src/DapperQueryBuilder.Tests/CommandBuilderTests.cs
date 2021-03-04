@@ -402,5 +402,84 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
         }
 
 
+        [Test]
+        public void TestRepeatedParameters2()
+        {
+        	int? fileId = null;
+        	string backupFileName = null;
+        	var folderKey = 93572;
+        	var secureFileName = "upload.txt";
+        	var uploadDate = DateTime.Now;
+        	string description = null;
+        	int? size = null;
+        	var cacheId = new Guid("{95b94695-b7ec-4e3a-9260-f815cceb5ff1}");
+        	var version = new Guid("{95b94695-b7ec-4e3a-9260-f815cceb5ff1}");
+        	var user = "terry.aney";
+        	var contentType = "application/pdf";
+        	var folder = "btr.aney.terry";
+
+        	var query = cn.QueryBuilder($@"DECLARE @fKey int; SET @fKey = {fileId};
+DECLARE @backupFileName VARCHAR(1); SET @backupFileName = {backupFileName};
+IF @backupFileName IS NOT NULL BEGIN
+	UPDATE [File] SET Name = @backupFileName WHERE UID = @fKey;
+	SET @fKey = NULL;
+END
+IF @fKey IS NULL BEGIN
+	INSERT INTO [File] ( Folder, Name, CreateTime, Description )
+	VALUES ( {folderKey}, {secureFileName}, {uploadDate}, {description} )
+	SELECT @fKey = SCOPE_IDENTITY();
+END ELSE BEGIN
+	-- File Existed
+	UPDATE [File] SET Deleted = 0, Description = ISNULL({description}, Description) WHERE UID = @fKey
+END
+DECLARE @size int; SET @size = {size};
+-- File was compressed during upload so the 'original' file size is wrong and need to query the length of the content
+IF @size IS NULL BEGIN
+	SELECT @size = DATALENGTH( Content )
+	FROM Cache
+	WHERE UID = {cacheId}
+END
+INSERT INTO Version ( [File], VersionID, Time, UploadedBy, ContentType, Size, VersionIndex, DataLockerToken )
+VALUES ( @fKey, {version}, {uploadDate}, {user}, {contentType}, @size, 0, {cacheId} )
+INSERT INTO [Log] ( Action, FolderName, FileName, VersionId, VersionIndex, [User], Size, Time )
+VALUES ( 'I', {folder}, {secureFileName}, {version}, 0, {user}, @size, {uploadDate} )
+SELECT @fKey");
+
+        	Assert.AreEqual(@"DECLARE @fKey int; SET @fKey = @p0;
+DECLARE @backupFileName VARCHAR(1); SET @backupFileName = @p0;
+IF @backupFileName IS NOT NULL BEGIN
+	UPDATE [File] SET Name = @backupFileName WHERE UID = @fKey;
+	SET @fKey = NULL;
+END
+IF @fKey IS NULL BEGIN
+	INSERT INTO [File] ( Folder, Name, CreateTime, Description )
+	VALUES ( @p1, @p2, @p3, @p0 )
+	SELECT @fKey = SCOPE_IDENTITY();
+END ELSE BEGIN
+	-- File Existed
+	UPDATE [File] SET Deleted = 0, Description = ISNULL(@p0, Description) WHERE UID = @fKey
+END
+DECLARE @size int; SET @size = @p0;
+-- File was compressed during upload so the 'original' file size is wrong and need to query the length of the content
+IF @size IS NULL BEGIN
+	SELECT @size = DATALENGTH( Content )
+	FROM Cache
+	WHERE UID = @p4
+END
+INSERT INTO Version ( [File], VersionID, Time, UploadedBy, ContentType, Size, VersionIndex, DataLockerToken )
+VALUES ( @fKey, @p4, @p3, @p5, @p6, @size, 0, @p4 )
+INSERT INTO [Log] ( Action, FolderName, FileName, VersionId, VersionIndex, [User], Size, Time )
+VALUES ( 'I', @p7, @p2, @p4, 0, @p5, @size, @p3 )
+SELECT @fKey", query.Sql);
+
+        	Assert.AreEqual(query.Parameters.Get<int?>("p0"), null);
+        	Assert.AreEqual(query.Parameters.Get<int>("p1"), folderKey);
+        	Assert.AreEqual(query.Parameters.Get<string>("p2"), secureFileName);
+        	Assert.AreEqual(query.Parameters.Get<DateTime>("p3"), uploadDate);
+        	Assert.AreEqual(query.Parameters.Get<Guid>("p4"), cacheId);
+        	Assert.AreEqual(query.Parameters.Get<string>("p5"), user);
+        	Assert.AreEqual(query.Parameters.Get<string>("p6"), contentType);
+        	Assert.AreEqual(query.Parameters.Get<string>("p7"), folder);
+        }
     }
 }
