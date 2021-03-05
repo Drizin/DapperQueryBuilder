@@ -45,7 +45,7 @@ ORDER BY ProductId
             int maxWeight = 15;
             string search = "%Mountain%";
 
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .Select($"ProductId")
                 .Select($"Name")
                 .Select($"ListPrice")
@@ -83,7 +83,7 @@ ORDER BY ProductId
         public void JoinsTest()
         {
             var categories = new string[] { "Components", "Clothing", "Acessories" };
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .SelectDistinct($"c.[Name] as [Category], sc.[Name] as [Subcategory], p.[Name], p.[ProductNumber]")
                 .From($"[Production].[Product] p")
                 .From($"INNER JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
@@ -95,7 +95,7 @@ ORDER BY ProductId
         [Test]
         public void FullQueryTest()
         {
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .Select($"cat.[Name] as [Category]")
                 .Select($"sc.[Name] as [Subcategory]")
                 .Select($"AVG(p.[ListPrice]) as [AveragePrice]")
@@ -140,7 +140,7 @@ WHERE [ListPrice] <= @p0 AND ([Weight] <= @p1 OR [Name] LIKE @p2)
 ORDER BY ProductId
 ";
 
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .Select($"ProductId")
                 .Select($"Name")
                 .Select($"ListPrice")
@@ -180,7 +180,7 @@ FROM [Production].[Product]
 WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)
 ";
 
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .Select($"ProductId, Name, ListPrice, Weight")
                 .From($"[Production].[Product]")
                 .Where(new Filters(
@@ -245,7 +245,7 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
         [Test]
         public void GroupByOrderByQueryTest()
         {
-            var q = cn.QueryBuilder()
+            var q = cn.FluentQueryBuilder()
                 .Select($"cat.[Name] as [Category]")
                 .Select($"AVG(p.[ListPrice]) as [AveragePrice]")
                 .From($"[Production].[Product] p")

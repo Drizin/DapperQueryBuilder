@@ -14,8 +14,7 @@ namespace DapperQueryBuilder
         /// Creates a new empty FluentQueryBuilder over current connection
         /// </summary>
         /// <param name="cnn"></param>
-        /// <returns></returns>
-        public static IEmptyQueryBuilder QueryBuilder(this IDbConnection cnn)
+        public static IEmptyQueryBuilder FluentQueryBuilder(this IDbConnection cnn)
         {
             return new FluentQueryBuilder(cnn);
         }
@@ -28,10 +27,18 @@ namespace DapperQueryBuilder
         /// <param name="query">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
         /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
         /// </param>
-        /// <returns></returns>
         public static QueryBuilder QueryBuilder(this IDbConnection cnn, FormattableString query)
         {
             return new QueryBuilder(cnn, query);
+        }
+
+        /// <summary>
+        /// Creates a new empty QueryBuilder over current connection
+        /// </summary>
+        /// <param name="cnn"></param>
+        public static QueryBuilder QueryBuilder(this IDbConnection cnn)
+        {
+            return new QueryBuilder(cnn);
         }
 
         /// <summary>
@@ -39,10 +46,17 @@ namespace DapperQueryBuilder
         /// </summary>
         /// <param name="cnn"></param>
         /// <param name="command">SQL command</param>
-        /// <returns></returns>
         public static CommandBuilder CommandBuilder(this IDbConnection cnn, FormattableString command)
         {
             return new CommandBuilder(cnn, command);
+        }
+
+        /// <summary>
+        /// Creates a new empty CommandBuilder over current connection
+        /// </summary>
+        public static CommandBuilder CommandBuilder(this IDbConnection cnn)
+        {
+            return new CommandBuilder(cnn);
         }
 
     }

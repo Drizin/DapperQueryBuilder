@@ -481,5 +481,29 @@ SELECT @fKey", query.Sql);
         	Assert.AreEqual(query.Parameters.Get<string>("p6"), contentType);
         	Assert.AreEqual(query.Parameters.Get<string>("p7"), folder);
         }
+
+        [Test]
+        public void TestMultipleStatements()
+        {
+            int orderId = 10;
+            string currentUserId = "admin";
+
+            bool softDelete = true;
+            string action = "DELETED_ORDER";
+            string description = $"User {currentUserId} deleted order {orderId}";
+
+            var cmd = cn.CommandBuilder();
+            if (softDelete)
+                cmd.Append($"UPDATE Orders SET IsDeleted=1 WHERE OrderId = {orderId}; ");
+            else
+                cmd.Append($"DELETE FROM Orders WHERE OrderId = {orderId}; ");
+            cmd.Append($"INSERT INTO Logs (Action, UserId, Description) VALUES ({action}, {orderId}, {description}); ");
+
+            Assert.AreEqual(cmd.Parameters.Count, 3);
+            Assert.AreEqual(cmd.Parameters.Get<int>("p0"), orderId);
+            Assert.AreEqual(cmd.Parameters.Get<string>("p1"), action);
+            Assert.AreEqual(cmd.Parameters.Get<string>("p2"), description);
+        }
+
     }
 }

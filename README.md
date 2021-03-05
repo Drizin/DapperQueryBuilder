@@ -370,6 +370,16 @@ int affected = q.Execute(commandType: CommandType.StoredProcedure);
 int returnValue = q.Parameters.Get<int>("ReturnValue");
 ```
 
+## Multiple statements in a single command
+```cs
+// In a single roundtrip we can run multiple SQL commands
+var cmd = cn.CommandBuilder();
+if (softDelete)
+	cmd.Append($"UPDATE Orders SET IsDeleted=1 WHERE OrderId = {orderId}; ");
+else
+	cmd.Append($"DELETE FROM Orders WHERE OrderId = {orderId}; ");
+cmd.Append($"INSERT INTO Logs (Action, UserId, Description) VALUES ({action}, {orderId}, {description}); ");
+```
 
 # How was life before this library? :-) 
 
