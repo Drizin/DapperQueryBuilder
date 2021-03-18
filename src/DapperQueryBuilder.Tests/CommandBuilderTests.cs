@@ -505,5 +505,34 @@ SELECT @fKey", query.Sql);
             Assert.AreEqual(cmd.Parameters.Get<string>("p2"), description);
         }
 
+        [Test]
+        public void TestQueryBuilderWithJoins()
+        {
+            string productName = "%mountain%";
+            string joinParam = "test";
+
+            var query = cn
+                .QueryBuilder($@"SELECT * FROM [Table1] /**joins**/ WHERE [Table1].[Name] LIKE {productName}");
+
+            query.From($"INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name={joinParam}");
+
+            Assert.AreEqual("SELECT * FROM [Table1] INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name=@p1 WHERE [Table1].[Name] LIKE @p0", query.Sql);
+        }
+
+        [Test]
+        public void TestQueryBuilderWithFrom()
+        {
+            string productName = "%mountain%";
+            string joinParam = "test";
+
+            var query = cn
+                .QueryBuilder($@"SELECT * /**from**/ WHERE [Table1].[Name] LIKE {productName}");
+
+            query.From($"[Table1]")
+                .From($"INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name={joinParam}");
+
+            Assert.AreEqual(@"SELECT * FROM [Table1]
+INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name=@p1 WHERE [Table1].[Name] LIKE @p0", query.Sql);
+        }
     }
 }

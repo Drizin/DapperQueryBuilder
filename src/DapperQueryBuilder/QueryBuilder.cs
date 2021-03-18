@@ -19,6 +19,7 @@ namespace DapperQueryBuilder
     {
         #region Members
         private readonly Filters _filters = new Filters();
+        private readonly List<string> _froms = new List<string>();
         private readonly CommandBuilder _commandBuilder;
         #endregion
 
@@ -81,7 +82,7 @@ namespace DapperQueryBuilder
             _filters.Add(filters);
             return this;
         }
-
+        
 
         /// <summary>
         /// Adds a new condition to where clauses. <br />
@@ -145,6 +146,20 @@ namespace DapperQueryBuilder
                     }
                 }
 
+                if (_froms.Any())
+                {
+                    string froms = string.Join(Environment.NewLine, _froms);
+
+                    if (finalSql.Length > 0 && finalSql.ToString().Contains("/**from**/"))
+                        finalSql.Replace("/**from**/", "FROM " + froms);
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("{from}"))
+                        finalSql.Replace("{from}", "FROM " + froms);
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("/**joins**/"))
+                        finalSql.Replace("/**joins**/", froms);
+                    else if (finalSql.Length > 0 && finalSql.ToString().Contains("{joins}"))
+                        finalSql.Replace("{joins}", froms);
+                }
+
                 return finalSql.ToString();
             }
         }
@@ -183,6 +198,17 @@ namespace DapperQueryBuilder
             return this;
         }
 
-
+        /// <summary>
+        /// Adds a new join to the FROM clause.
+        /// </summary>
+        public virtual QueryBuilder From(FormattableString fromString)
+        {
+            var parsedStatement = new InterpolatedStatementParser(fromString);
+            if (parsedStatement.Parameters.Any())
+                _froms.Add(Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql));
+            else
+                _froms.Add(parsedStatement.Sql);
+            return this;
+        }
     }
 }
