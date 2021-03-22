@@ -32,6 +32,36 @@ namespace DapperQueryBuilder
 
         #endregion
 
+        #region Dapper (ICompleteQuery.ExecuteScalar())
+        /// <summary>
+        /// Executes the query (using Dapper), returning the first cell returned, as T.
+        /// </summary>
+        public static Task<T> ExecuteScalarAsync<T>(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.ExecuteScalarAsync<T>(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning the first cell returned, as object.
+        /// </summary>
+        public static Task<object> ExecuteScalarAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.ExecuteScalarAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        #endregion
+
+        #region Dapper (ICompleteQuery.QueryMultipleAsync())
+        /// <summary>
+        /// Executes the query (using Dapper), returning multiple result sets.
+        /// </summary>
+        public static Task<SqlMapper.GridReader> QueryMultipleAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QueryMultipleAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        #endregion
+
         #region Dapper (ICompleteQuery<T>.Query<T>)
         /// <summary>
         /// Executes the query (using Dapper), returning the data typed as T.
