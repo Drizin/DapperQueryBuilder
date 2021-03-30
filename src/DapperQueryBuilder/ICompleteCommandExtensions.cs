@@ -34,6 +34,14 @@ namespace DapperQueryBuilder
 
         #region Dapper (ICompleteQuery.ExecuteScalar())
         /// <summary>
+        /// Executes the query (using Dapper), returning the first cell returned, as object.
+        /// </summary>
+        public static object ExecuteScalar(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.ExecuteScalar(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        /// <summary>
         /// Executes the query (using Dapper), returning the first cell returned, as T.
         /// </summary>
         public static Task<T> ExecuteScalarAsync<T>(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
@@ -51,9 +59,17 @@ namespace DapperQueryBuilder
 
         #endregion
 
-        #region Dapper (ICompleteQuery.QueryMultipleAsync())
+        #region Dapper (ICompleteQuery.QueryMultiple())
         /// <summary>
-        /// Executes the query (using Dapper), returning multiple result sets.
+        /// Executes the query (using Dapper), returning multiple result sets, and access each in turn.
+        /// </summary>
+        public static SqlMapper.GridReader QueryMultiple(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.QueryMultiple(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning multiple result sets, and access each in turn.
         /// </summary>
         public static Task<SqlMapper.GridReader> QueryMultipleAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
