@@ -95,13 +95,27 @@ ORDER BY ProductId
                 new Filter($"[Weight] <= {maxWeight}"),
                 new Filter($"[Name] LIKE {search}")
             });
-            
+
             Dapper.DynamicParameters parms = new Dapper.DynamicParameters();
             string where = filters.BuildFilters(parms);
 
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
         }
 
+        [Test]
+        public void TestQueryBuilderWithNestedFormattableString()
+        {
+            int orgId = 123;
+            FormattableString innerQuery = $"SELECT Id, Name FROM SomeTable where OrganizationId={orgId}";
+            var q = cn.QueryBuilder($"SELECT FROM ({innerQuery}) a join AnotherTable b on a.Id=b.Id where b.OrganizationId={321}");
 
+            Assert.AreEqual("SELECT FROM (SELECT Id, Name FROM SomeTable where OrganizationId=@p0) a join AnotherTable b on a.Id=b.Id where b.OrganizationId=@p1", q.Sql);
+
+            Assert.AreEqual(2, q.Parameters.Count);
+            var p0 = q.Parameters["p0"];
+            var p1 = q.Parameters["p1"];
+            Assert.AreEqual(123, p0.Value);
+            Assert.AreEqual(321, p1.Value);
+        }
     }
 }
