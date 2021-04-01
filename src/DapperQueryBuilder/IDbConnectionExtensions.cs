@@ -33,6 +33,19 @@ namespace DapperQueryBuilder
         }
 
         /// <summary>
+        /// Creates a new QueryBuilder over current connection
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
+        /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "filters" (without where) (if any filter is defined).
+        /// </param>
+        /// <param name="parameters">Anonymous object containing any parameters referenced in the SQL query. Can be null.</param>
+        public static QueryBuilder QueryBuilder(this IDbConnection cnn, string sql, object parameters)
+        {
+            return new QueryBuilder(cnn, sql, parameters);
+        }
+
+        /// <summary>
         /// Creates a new empty QueryBuilder over current connection
         /// </summary>
         /// <param name="cnn"></param>

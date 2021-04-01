@@ -102,6 +102,19 @@ ORDER BY ProductId
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
         }
 
+        [Test]
+        public void TestQueryBuilderParameterizedConstructor()
+        {
+            bool useTableA = false;
 
+            var query = cn.QueryBuilder($"SELECT * FROM {(useTableA ? "TableA" : "TableB")} WHERE SomeColumn=@someParam", new { someParam = "someParamValue" });
+
+            Assert.AreEqual("SELECT * FROM TableB WHERE SomeColumn=@p0", query.Sql);
+            Assert.AreEqual(1, query.Parameters.Count);
+
+            var param = query.Parameters.First().Value;
+            Assert.AreEqual("p0", param.Name);
+            Assert.AreEqual("someParamValue", param.Value);
+        }
     }
 }

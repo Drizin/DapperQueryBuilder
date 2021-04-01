@@ -60,6 +60,22 @@ namespace DapperQueryBuilder
         {
             _commandBuilder = new CommandBuilder(cnn, query);
         }
+
+        /// <summary>
+        /// New QueryBuilder based on an initial parameterized query. <br />
+        /// Query can be modified using .Append(), .AppendLine(), .Where(). <br />
+        /// Parameters should be referenced Dapper-style prefixed with the "@" symbol.
+        /// Where filters will later replace /**where**/ keyword
+        /// </summary>
+        /// <param name="cnn"></param>
+        /// <param name="sql">You can use "{where}" or "/**where**/" in your query, and it will be replaced by "WHERE + filters" (if any filter is defined). <br />
+        /// You can use "{filters}" or "/**filters**/" in your query, and it will be replaced by "AND filters" (without where) (if any filter is defined).
+        /// </param>
+        /// <param name="parameters">Anonymous object containing any parameters referenced in the SQL query. Can be null.</param>
+        public QueryBuilder(IDbConnection cnn, string sql, object parameters)
+        {
+            _commandBuilder = new CommandBuilder(cnn, new InterpolatedStatementAdapter(sql, parameters));
+        }
         #endregion
 
         #region Filters/Where
