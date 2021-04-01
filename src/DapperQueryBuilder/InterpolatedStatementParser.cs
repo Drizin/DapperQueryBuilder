@@ -124,7 +124,16 @@ namespace DapperQueryBuilder
                     sb.Append(arg);
                     continue;
                 }
-
+                else if (arg is FormattableString fsArg) //Support nested FormattableString
+                {
+                    sb.Append(sql);
+                    var nestedStatement = new InterpolatedStatementParser(fsArg);
+                    if (nestedStatement.Parameters.Any())
+                        sb.Append(Parameters.MergeParameters(nestedStatement.Parameters, nestedStatement.Sql));
+                    else
+                        sb.Append(nestedStatement.Sql);
+                    continue;
+                }
                 // If user passes " column LIKE '{variable}' ", we assume that he used single quotes incorrectly as if interpolated string was a sql literal
                 if (quotedVariableStart.IsMatch(sql) && quotedVariableEnd.IsMatch(format.Substring(lastPos)))
                 {
