@@ -324,5 +324,23 @@ namespace DapperQueryBuilder
         }
         #endregion
 
+        #region Dapper (ICompleteQuery.ExecuteReader())
+        /// <summary>
+        /// Executes the query (using Dapper), returning an System.Data.IDataReader
+        /// </summary>
+        public static IDataReader ExecuteReader(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.ExecuteReader(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+
+        /// <summary>
+        /// Executes the query (using Dapper), returning an System.Data.IDataReader
+        /// </summary>
+        public static Task<IDataReader> ExecuteReaderAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        {
+            return command.Connection.ExecuteReaderAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+        }
+        #endregion
+
     }
 }
