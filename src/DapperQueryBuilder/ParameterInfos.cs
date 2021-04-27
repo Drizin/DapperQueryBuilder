@@ -176,7 +176,7 @@ namespace DapperQueryBuilder
             }
             if (renamedParameters.Any())
             {
-                Regex matchParametersRegex = new Regex("(?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b) (" + string.Join("|", renamedParameters.Select(p=>p.Key)) + ") (?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b)",
+                Regex matchParametersRegex = new Regex("(?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b|^) (" + string.Join("|", renamedParameters.Select(p=>p.Key)) + ") (?:[a-zA-Z0-9~=<>*/%+&|^-]|\\s|\\b|$)",
                     RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
                 string newSql = matchParametersRegex.Replace(sql, match => {
                     Group group = match.Groups[match.Groups.Count-1]; // last match is the inner parameter
