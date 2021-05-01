@@ -116,7 +116,7 @@ namespace DapperQueryBuilder
                 // we assume that a single word will always be appended in a single statement (why would anyone split a single sql word in 2 appends?!),
                 // so if there is no whitespace (or line break) between last text and new text, we add a space betwen them
                 string currentLine = _command.ToString().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).LastOrDefault();
-                if (currentLine != null && currentLine.Length > 0 && !char.IsWhiteSpace(currentLine.Last()) && !char.IsWhiteSpace(sql[0]))
+                if (currentLine != null && currentLine.Length > 0 && !char.IsWhiteSpace(currentLine.Last()) && currentLine.Last()!=',' && !char.IsWhiteSpace(sql[0]))
                     _command.Append(" ");
             }
             _command.Append(sql);
