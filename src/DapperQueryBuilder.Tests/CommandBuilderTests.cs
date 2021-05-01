@@ -9,9 +9,18 @@ using System.Linq;
 
 namespace DapperQueryBuilder.Tests
 {
+    [TestFixture(true)]
+    [TestFixture(false)]
+
     public class CommandBuilderTests
     {
         IDbConnection cn;
+
+        public CommandBuilderTests() { } // nunit requires parameterless constructor
+        public CommandBuilderTests(bool reuseIdenticalParameters)
+        {
+            DapperQueryBuilderOptions.ReuseIdenticalParameters = reuseIdenticalParameters;
+        }
 
         #region Setup
         [SetUp]
@@ -384,24 +393,41 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
             query.Append($"OR [ProductCategoryID]={subCategoryId}");
             query.Append($"OR [ProductCategoryID]={categoryId})");
 
-            Assert.AreEqual(@"SELECT * FROM [table1] WHERE ([Name]=@p0 or [Author]=@p0"
-                + " or [Creator]=@p0)"
-                + " AND ([ProductSubcategoryID]=@p1"
-                + " OR [ProductSubcategoryID]=@p2"
-                + " OR [ProductCategoryID]=@p1"
-                + " OR [ProductCategoryID]=@p2)"
-                , query.Sql);
-            int? val = query.Parameters.Get<int?>("p2");
-            Assert.AreEqual(val, null);
-
-            int val2 = query.Parameters.Get<int>("p1");
-            Assert.AreEqual(val2, 12);
+            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            {
+                Assert.AreEqual(@"SELECT * FROM [table1] WHERE ([Name]=@p0 or [Author]=@p0"
+                    + " or [Creator]=@p0)"
+                    + " AND ([ProductSubcategoryID]=@p1"
+                    + " OR [ProductSubcategoryID]=@p2"
+                    + " OR [ProductCategoryID]=@p1"
+                    + " OR [ProductCategoryID]=@p2)"
+                    , query.Sql);
+                Assert.AreEqual(query.Parameters.Get<int>("p1"), 12);
+                Assert.AreEqual(query.Parameters.Get<int?>("p2"), null);
+            }
+            else
+            {
+                Assert.AreEqual(@"SELECT * FROM [table1] WHERE ([Name]=@p0 or [Author]=@p1"
+                    + " or [Creator]=@p2)"
+                    + " AND ([ProductSubcategoryID]=@p3"
+                    + " OR [ProductSubcategoryID]=@p4"
+                    + " OR [ProductCategoryID]=@p5"
+                    + " OR [ProductCategoryID]=@p6)"
+                    , query.Sql);
+                Assert.AreEqual(query.Parameters.Get<int>("p3"), 12);
+                Assert.AreEqual(query.Parameters.Get<int>("p5"), 12);
+                Assert.AreEqual(query.Parameters.Get<int?>("p4"), null);
+                Assert.AreEqual(query.Parameters.Get<int?>("p6"), null);
+            }
         }
 
 
         [Test]
         public void TestRepeatedParameters2()
         {
+            if (!DapperQueryBuilderOptions.ReuseIdenticalParameters)
+                return;
+
         	int? fileId = null;
         	string backupFileName = null;
         	var folderKey = 93572;
@@ -499,7 +525,10 @@ SELECT @fKey", query.Sql);
             qb.Append($"{"A"}"); // @p21 should reuse @p0
             qb.Append($"{"B"}"); // @p22 should reuse @p1
 
-            Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p0 @p1", qb.Sql);
+            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+                Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p0 @p1", qb.Sql);
+            else
+                Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p21,@p22 @p23", qb.Sql);
         }
         
         [Test]
@@ -533,7 +562,10 @@ SELECT @fKey", query.Sql);
             qb.Append($"{"A"}"); // @p20 should reuse @p0
             qb.Append($"{"B"}"); // @p21 should reuse @p1
 
-            Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p0 @p1", qb.Sql);
+            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+                Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p0 @p1", qb.Sql);
+            else
+                Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p20 @p21", qb.Sql);
         }
 
         [Test]
@@ -553,10 +585,21 @@ SELECT @fKey", query.Sql);
                 cmd.Append($"DELETE FROM Orders WHERE OrderId = {orderId}; ");
             cmd.Append($"INSERT INTO Logs (Action, UserId, Description) VALUES ({action}, {orderId}, {description}); ");
 
-            Assert.AreEqual(cmd.Parameters.Count, 3);
-            Assert.AreEqual(cmd.Parameters.Get<int>("p0"), orderId);
-            Assert.AreEqual(cmd.Parameters.Get<string>("p1"), action);
-            Assert.AreEqual(cmd.Parameters.Get<string>("p2"), description);
+            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            {
+                Assert.AreEqual(cmd.Parameters.Count, 3);
+                Assert.AreEqual(cmd.Parameters.Get<int>("p0"), orderId);
+                Assert.AreEqual(cmd.Parameters.Get<string>("p1"), action);
+                Assert.AreEqual(cmd.Parameters.Get<string>("p2"), description);
+            }
+            else
+            {
+                Assert.AreEqual(cmd.Parameters.Count, 4);
+                Assert.AreEqual(cmd.Parameters.Get<int>("p0"), orderId);
+                Assert.AreEqual(cmd.Parameters.Get<string>("p1"), action);
+                Assert.AreEqual(cmd.Parameters.Get<int>("p2"), orderId);
+                Assert.AreEqual(cmd.Parameters.Get<string>("p3"), description);
+            }
         }
 
         [Test]
