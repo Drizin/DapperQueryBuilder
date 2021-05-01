@@ -1,0 +1,7 @@
+{
+  // AdventureWorks 2019 - https://docs.microsoft.com/en-us/sql/samples/adventureworks-install-configure?view=sql-server-ver15)
+  "ConnectionStrings": {
+    "MSSQLConnection": "Data Source=(local)\\SQLEXPRESS;Initial Catalog=AdventureWorks2019;Integrated Security=True;",
+    "PostgreSQLConnection": "User ID=postgres;Password=myPassword;Host=localhost;Port=5432;Database=dvdrental;"
+  }
+}

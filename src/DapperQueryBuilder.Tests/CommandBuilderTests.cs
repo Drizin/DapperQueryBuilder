@@ -17,10 +17,7 @@ namespace DapperQueryBuilder.Tests
         [SetUp]
         public void Setup()
         {
-            string connectionString = @"Data Source=LENOVOFLEX5;
-                            Initial Catalog=AdventureWorks;
-                            Integrated Security=True;";
-            cn = new SqlConnection(connectionString);
+            cn = new SqlConnection(TestHelper.GetMSSQLConnectionString());
         }
         #endregion
 
@@ -480,6 +477,63 @@ SELECT @fKey", query.Sql);
         	Assert.AreEqual(query.Parameters.Get<string>("p5"), user);
         	Assert.AreEqual(query.Parameters.Get<string>("p6"), contentType);
         	Assert.AreEqual(query.Parameters.Get<string>("p7"), folder);
+        }
+
+        [Test]
+        public void TestRepeatedParameters3() // without leading spaces
+        {
+            var cn = new SqlConnection();
+            var qb = cn.QueryBuilder($"{"A"}");
+            qb.Append($"{"B"}");
+            Assert.AreEqual("@p0 @p1", qb.Sql);
+        }
+
+        [Test]
+        public void TestRepeatedParameters4()
+        {
+            var cn = new SqlConnection();
+            var qb = cn.QueryBuilder();
+            qb.Append($"{"A"},{"B"},{"C"},{"D"},{"E"},{"F"},{"G"},{"H"},{"I"},{"J"},{"K"},"); // @p0-@p10
+            qb.Append($"{1},{2},{3},{4},{4},{5},{6},{7},{8},{9},{10},"); // @p10-@p20, with repeated @p14
+
+            qb.Append($"{"A"}"); // @p21 should reuse @p0
+            qb.Append($"{"B"}"); // @p22 should reuse @p1
+
+            Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p0 @p1", qb.Sql);
+        }
+        
+        [Test]
+        public void TestRepeatedParameters5()
+        {
+            var cn = new SqlConnection();
+            var qb = cn.QueryBuilder();
+            qb.Append($"{"A"}"); // @p0
+            qb.Append($"{"B"}"); // @p1
+
+            qb.Append($"{2}"); // @p2
+            qb.Append($"{3}"); // @p3
+            qb.Append($"{4}"); // @p4
+            qb.Append($"{5}"); // @p5
+            qb.Append($"{6}"); // @p6
+            qb.Append($"{7}"); // @p7
+            qb.Append($"{8}"); // @p8
+            qb.Append($"{9}"); // @p9
+
+            qb.Append($"{10}"); // @p10
+            qb.Append($"{11}"); // @p11
+            qb.Append($"{12}"); // @p12
+            qb.Append($"{13}"); // @p13
+            qb.Append($"{14}"); // @p14
+            qb.Append($"{15}"); // @p15
+            qb.Append($"{16}"); // @p16
+            qb.Append($"{17}"); // @p17
+            qb.Append($"{18}"); // @p18
+            qb.Append($"{19}"); // @p19
+
+            qb.Append($"{"A"}"); // @p20 should reuse @p0
+            qb.Append($"{"B"}"); // @p21 should reuse @p1
+
+            Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p0 @p1", qb.Sql);
         }
 
         [Test]
