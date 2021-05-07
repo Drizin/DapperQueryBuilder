@@ -325,10 +325,10 @@ q.Append($"WHERE c.Name IN {categories}");
 
 For those who like method-chaining guidance (or for those who allow end-users to build their own queries), there's a Fluent API which allows you to build queries step-by-step mimicking dynamic SQL concatenation.  
 
-So, basically, instead of starting with a full query and just appending new filters (`.Where()`), the QueryBuilder will build the whole query for you:
+So, basically, instead of starting with a full query and just appending new filters (`.Where()`), the FluentQueryBuilder will build the whole query for you:
 
 ```cs
-var q = cn.QueryBuilder()
+var q = cn.FluentQueryBuilder()
     .Select($"ProductId")
     .Select($"Name")
     .Select($"ListPrice")
@@ -353,7 +353,7 @@ ORDER BY ProductId
 Or more elaborated:
 
 ```cs
-var q = cn.QueryBuilder()
+var q = cn.FluentQueryBuilder()
     .SelectDistinct($"ProductId, Name, ListPrice, Weight")
     .From("Product")
     .Where($"ListPrice <= {maxPrice}")
@@ -367,7 +367,7 @@ Building joins dynamically using Fluent API:
 ```cs
 var categories = new string[] { "Components", "Clothing", "Acessories" };
 
-var q = cn.QueryBuilder()
+var q = cn.FluentQueryBuilder()
     .SelectDistinct($"c.Name as Category, sc.Name as Subcategory, p.Name, p.ProductNumber")
     .From($"Product p")
     .From($"INNER JOIN ProductSubcategory sc ON p.ProductSubcategoryID=sc.ProductSubcategoryID")
