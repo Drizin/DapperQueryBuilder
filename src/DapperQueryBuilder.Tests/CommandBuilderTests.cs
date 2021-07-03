@@ -631,5 +631,113 @@ SELECT @fKey", query.Sql);
             Assert.AreEqual(@"SELECT * FROM [Table1]
 INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name=@p1 WHERE [Table1].[Name] LIKE @p0", query.Sql);
         }
+
+        [Test]
+        public void ArrayTest()
+        {
+            //https://github.com/Drizin/DapperQueryBuilder/issues/22
+            string v = "a";
+            List<int> numList = new List<int> { 1, 2, 3, 4, 5, 6 };
+
+            FormattableString script = $@"
+declare @v1 nvarchar(10)={v}
+declare @v2 nvarchar(10)={v}
+select 1 from tb where name in {numList}
+declare @v3 nvarchar(10)={v}
+declare @v4 nvarchar(10)={v}
+declare @v5 nvarchar(10)={v}
+declare @v6 nvarchar(10)={v}
+declare @v7 nvarchar(10)={v}
+declare @v8 nvarchar(10)={v}
+declare @v9 nvarchar(10)={v}
+declare @v10 nvarchar(10)={v}
+declare @v11 nvarchar(10)={v}
+declare @v12 nvarchar(10)={v}
+declare @v13 nvarchar(10)={v}
+declare @v14 nvarchar(10)={v}
+declare @v15 nvarchar(10)={v}
+declare @v16 nvarchar(10)={v}
+declare @v17 nvarchar(10)={v}
+declare @v18 nvarchar(10)={v}
+declare @v19 nvarchar(10)={v}
+declare @v20 nvarchar(10)={v}
+declare @v21 nvarchar(10)={v}
+declare @v22 nvarchar(10)={v}
+declare @v23 nvarchar(10)={v}
+select 'ok'
+";
+
+            QueryBuilder query = cn.QueryBuilder(script);
+            var s = query.Sql;
+            var p = query.Parameters;
+
+            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            {
+                Assert.AreEqual(@"
+declare @v1 nvarchar(10)=@p0
+declare @v2 nvarchar(10)=@p0
+select 1 from tb where name in @parray1
+declare @v3 nvarchar(10)=@p0
+declare @v4 nvarchar(10)=@p0
+declare @v5 nvarchar(10)=@p0
+declare @v6 nvarchar(10)=@p0
+declare @v7 nvarchar(10)=@p0
+declare @v8 nvarchar(10)=@p0
+declare @v9 nvarchar(10)=@p0
+declare @v10 nvarchar(10)=@p0
+declare @v11 nvarchar(10)=@p0
+declare @v12 nvarchar(10)=@p0
+declare @v13 nvarchar(10)=@p0
+declare @v14 nvarchar(10)=@p0
+declare @v15 nvarchar(10)=@p0
+declare @v16 nvarchar(10)=@p0
+declare @v17 nvarchar(10)=@p0
+declare @v18 nvarchar(10)=@p0
+declare @v19 nvarchar(10)=@p0
+declare @v20 nvarchar(10)=@p0
+declare @v21 nvarchar(10)=@p0
+declare @v22 nvarchar(10)=@p0
+declare @v23 nvarchar(10)=@p0
+select 'ok'
+".TrimStart(), query.Sql);
+
+                Assert.AreEqual(query.Parameters.Get<string>("p0"), v);
+                Assert.AreEqual(query.Parameters.Get<List<int>>("parray1"), numList);
+            }
+            else
+            {
+                Assert.AreEqual(@"
+declare @v1 nvarchar(10)=@p0
+declare @v2 nvarchar(10)=@p1
+select 1 from tb where name in @parray2
+declare @v3 nvarchar(10)=@p3
+declare @v4 nvarchar(10)=@p4
+declare @v5 nvarchar(10)=@p5
+declare @v6 nvarchar(10)=@p6
+declare @v7 nvarchar(10)=@p7
+declare @v8 nvarchar(10)=@p8
+declare @v9 nvarchar(10)=@p9
+declare @v10 nvarchar(10)=@p10
+declare @v11 nvarchar(10)=@p11
+declare @v12 nvarchar(10)=@p12
+declare @v13 nvarchar(10)=@p13
+declare @v14 nvarchar(10)=@p14
+declare @v15 nvarchar(10)=@p15
+declare @v16 nvarchar(10)=@p16
+declare @v17 nvarchar(10)=@p17
+declare @v18 nvarchar(10)=@p18
+declare @v19 nvarchar(10)=@p19
+declare @v20 nvarchar(10)=@p20
+declare @v21 nvarchar(10)=@p21
+declare @v22 nvarchar(10)=@p22
+declare @v23 nvarchar(10)=@p23
+select 'ok'
+".TrimStart(), query.Sql);
+
+                Assert.AreEqual(query.Parameters.Get<string>("p0"), v);
+                Assert.AreEqual(query.Parameters.Get<string>("p1"), v);
+                Assert.AreEqual(query.Parameters.Get<List<int>>("parray2"), numList);
+            }
+        }
     }
 }

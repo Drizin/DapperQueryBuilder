@@ -204,10 +204,12 @@ namespace DapperQueryBuilder
         public virtual QueryBuilder From(FormattableString fromString)
         {
             var parsedStatement = new InterpolatedStatementParser(fromString);
+            string sql = parsedStatement.Sql;
             if (parsedStatement.Parameters.Any())
-                _froms.Add(Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql));
-            else
-                _froms.Add(parsedStatement.Sql);
+            {
+                sql = (Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql) ?? sql);
+            }
+            _froms.Add(sql);
             return this;
         }
     }

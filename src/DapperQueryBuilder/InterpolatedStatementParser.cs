@@ -130,10 +130,12 @@ namespace DapperQueryBuilder
                 {
                     sb.Append(sql);
                     var nestedStatement = new InterpolatedStatementParser(fsArg);
+                    string subSql = nestedStatement.Sql;
                     if (nestedStatement.Parameters.Any())
-                        sb.Append(Parameters.MergeParameters(nestedStatement.Parameters, nestedStatement.Sql));
-                    else
-                        sb.Append(nestedStatement.Sql);
+                    {
+                        subSql = (Parameters.MergeParameters(nestedStatement.Parameters, nestedStatement.Sql) ?? subSql);
+                    }
+                    sb.Append(nestedStatement.Sql);
                     continue;
                 }
                 // If user passes " column LIKE '{variable}' ", we assume that he used single quotes incorrectly as if interpolated string was a sql literal
