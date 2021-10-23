@@ -15,7 +15,7 @@ namespace DapperQueryBuilder
     {
         #region Members
         /// <summary>
-        /// Name of parameter. 
+        /// Auto-generated name of parameter like p0, p1, etc. Does NOT contain database-specific prefixes like @ or :
         /// </summary>
         public string Name { get; set; }
 
