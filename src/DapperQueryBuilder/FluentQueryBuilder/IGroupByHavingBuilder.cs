@@ -18,7 +18,7 @@ namespace DapperQueryBuilder
         IGroupByHavingBuilder Having(FormattableString having);
 
         /// <summary>
-        /// Adds a new condition to orderby clauses.
+        /// Adds one column to orderby clauses.
         /// </summary>
         IOrderByBuilder OrderBy(FormattableString orderBy);
     }

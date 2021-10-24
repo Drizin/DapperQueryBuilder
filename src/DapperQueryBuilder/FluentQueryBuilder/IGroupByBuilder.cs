@@ -9,8 +9,19 @@ namespace DapperQueryBuilder
     /// </summary>
     public interface IGroupByBuilder : ICompleteCommand
     {
+        /// <summary>
+        /// Adds one or more column(s) to groupby clauses.
+        /// </summary>
         IGroupByBuilder GroupBy(FormattableString groupBy);
+
+        /// <summary>
+        /// Adds one or more condition(s) to having clauses.
+        /// </summary>
         IGroupByHavingBuilder Having(FormattableString having);
+
+        /// <summary>
+        /// Adds one or more column(s) to orderby clauses.
+        /// </summary>
         IOrderByBuilder OrderBy(FormattableString orderBy);
     }
 }

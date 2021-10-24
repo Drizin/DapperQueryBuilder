@@ -10,7 +10,7 @@ namespace DapperQueryBuilder
     public interface IOrderByBuilder : ICompleteCommand
     {
         /// <summary>
-        /// Adds a new condition to orderby clauses.
+        /// Adds one column to orderby clauses.
         /// </summary>
         IOrderByBuilder OrderBy(FormattableString column);
 

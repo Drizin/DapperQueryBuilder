@@ -104,7 +104,7 @@ namespace DapperQueryBuilder
 
 
         /// <summary>
-        /// Adds a new column to orderby clauses.
+        /// Adds one or more column(s) to orderby clauses.
         /// </summary>
         public IOrderByBuilder OrderBy(FormattableString orderBy)
         {
@@ -115,7 +115,7 @@ namespace DapperQueryBuilder
         }
 
         /// <summary>
-        /// Adds a new column to groupby clauses.
+        /// Adds one or more column(s) to groupby clauses.
         /// </summary>
         public IGroupByBuilder GroupBy(FormattableString groupBy)
         {
@@ -126,7 +126,7 @@ namespace DapperQueryBuilder
         }
 
         /// <summary>
-        /// Adds a new condition to having clauses.
+        /// Adds one or more condition(s) to having clauses.
         /// </summary>
         public IGroupByHavingBuilder Having(FormattableString having)
         {

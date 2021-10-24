@@ -24,7 +24,6 @@ namespace DapperQueryBuilder
         private string _parametersStr;
 
         private readonly StringBuilder _command;
-        private int _autoNamedParametersCount = 0;
         
         /// <inheritdoc/>
         public IDbConnection Connection { get { return _cnn; } }
