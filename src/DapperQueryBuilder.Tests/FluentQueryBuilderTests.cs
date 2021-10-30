@@ -275,5 +275,55 @@ ORDER BY cat.[Name]
 
 
 
+        [Test]
+        public void FluentQueryBuilderInsideCommandBuilder()
+        {
+            int maxPrice = 1000;
+            int maxWeight = 15;
+            string search = "%Mountain%";
+            int customerId = 29825;
+
+            var productsSubQuery = cn.FluentQueryBuilder()
+                .Select($"ProductId")
+                .From($"[Production].[Product]")
+                .Where($"[ListPrice] <= {maxPrice}")
+                .Where($"[Weight] <= {maxWeight}")
+                .Where($"[Name] LIKE {search}");
+            
+            var customerOrdersSubQuery = cn.FluentQueryBuilder()
+                            .Select($"SalesOrderID")
+                            .From($"[Sales].[SalesOrderHeader]")
+                            .Where($"[CustomerId] = {customerId}");
+
+            var finalQuery = cn
+                .QueryBuilder($"SELECT * FROM [Sales].[SalesOrderDetail]")
+                .Append($"WHERE [ProductId] IN ({productsSubQuery})")
+                .Append($"AND [SalesOrderId] IN ({customerOrdersSubQuery})");
+
+            string expected =
+                @"SELECT * FROM [Sales].[SalesOrderDetail] WHERE [ProductId] IN (SELECT ProductId
+FROM [Production].[Product]
+WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
+) AND [SalesOrderId] IN (SELECT SalesOrderID
+FROM [Sales].[SalesOrderHeader]
+WHERE [CustomerId] = @p3
+)";
+
+            Assert.AreEqual(expected, finalQuery.Sql);
+            Assert.That(finalQuery.Parameters.ParameterNames.Contains("p0"));
+            Assert.That(finalQuery.Parameters.ParameterNames.Contains("p1"));
+            Assert.That(finalQuery.Parameters.ParameterNames.Contains("p2"));
+            Assert.That(finalQuery.Parameters.ParameterNames.Contains("p3"));
+            Assert.AreEqual(finalQuery.Parameters.Get<int>("p0"), maxPrice);
+            Assert.AreEqual(finalQuery.Parameters.Get<int>("p1"), maxWeight);
+            Assert.AreEqual(finalQuery.Parameters.Get<string>("p2"), search);
+            Assert.AreEqual(finalQuery.Parameters.Get<int>("p3"), customerId);
+
+            var orderItems = finalQuery.Query();
+
+            Assert.That(orderItems.Any());
+        }
+
+
     }
 }

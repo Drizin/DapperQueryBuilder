@@ -148,7 +148,7 @@ namespace DapperQueryBuilder
 
                 if (_froms.Any())
                 {
-                    string froms = string.Join(Environment.NewLine, _froms);
+                    string froms = string.Join(Environment.NewLine, _froms); //TODO: bool AutoLineBreaks - if false don't join with NewLine
 
                     if (finalSql.Length > 0 && finalSql.ToString().Contains("/**from**/"))
                         finalSql.Replace("/**from**/", "FROM " + froms);

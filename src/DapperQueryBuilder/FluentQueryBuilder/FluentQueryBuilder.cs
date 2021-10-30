@@ -190,6 +190,7 @@ namespace DapperQueryBuilder
         {
             get
             {
+                //TODO: bool AutoLineBreaks - if false don't use AppendLine()
                 StringBuilder finalSql = new StringBuilder();
 
                 // If Query Template is provided, we assume it contains both SELECT and FROMs
