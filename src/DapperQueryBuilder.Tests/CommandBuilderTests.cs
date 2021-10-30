@@ -165,20 +165,9 @@ ORDER BY [ProductId]", query.Sql);
         [Test]
         public void TestStoredProcedureOutput()
         {
-            /*
-                CREATE PROCEDURE [Test]
-                    @Input1 [int], 
-                    @Output1 [int] OUTPUT
-                AS
-                BEGIN
-	                SET @Output1 = 2
-                END;
-                GO
-            */
-
             MyPoco poco = new MyPoco();
 
-            var cmd = cn.CommandBuilder($"[dbo].[Test]")
+            var cmd = cn.CommandBuilder($"[dbo].[sp_TestOutput]")
                 .AddParameter("Input1", dbType: DbType.Int32);
             //.AddParameter("Output1",  dbType: DbType.Int32, direction: ParameterDirection.Output);
             //var getter = ParameterInfos.GetSetter((MyPoco p) => p.MyValue);
