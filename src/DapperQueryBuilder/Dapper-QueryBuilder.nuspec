@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper-QueryBuilder</id>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
     <title>Dapper.QueryBuilder</title>
     <authors>Rick Drizin</authors>
     <owners>Rick Drizin</owners>
