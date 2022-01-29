@@ -236,7 +236,7 @@ cmd.Execute();
 ```
 
 
-## raw strings
+## Raw strings
 
 If you want to embed raw strings in your queries (don't want them to be parametrized), you can use the **raw modifier**:
 
@@ -251,8 +251,30 @@ cn.QueryBuilder($@"
     INSERT INTO #tmpTable{uniqueId:raw} (Name) VALUES ({name});
 ").Execute();
 ```
+Whatever you pass as `:raw` should be "trusted" or if it's user-input it should be sanitized correctly to avoid SQL-injection issues.
 
-One good reason to use the **raw** modifier is when using **nameof expression**, which allows us to "find references" for a column, "rename", etc:
+## Raw strings: Dynamic Columns (or Dynamic Tables or...)
+One example of using the **raw** modifier is when you want to use **dynamic columns** (which allows to "find references" for a column, "rename", etc):
+
+```cs
+var query = connection.QueryBuilder($@"SELECT * FROM Employee /**where**/");
+foreach(var filter in filters)
+    query.Where($"{filter.ColumnName:raw} = {filter.Value}");
+```
+
+Or:
+
+```cs
+var query = connection.QueryBuilder($@"SELECT * FROM Employee WHERE 1=1");
+foreach(var filter in filters)
+    query.Append($" AND {filter.ColumnName:raw} = {filter.Value}");
+```
+
+Again: be aware that strings that you interpolate using `:raw` modifier are not passed as parameters and therefore you should ensure that the column names (filter.ColumnName) are safe.
+
+
+## Raw strings: nameof
+Another example of using the **raw** modifier is when you want to use **nameof expression** (which allows to "find references" for a column, "rename", etc):
 
 ```cs
 var q = cn.QueryBuilder($@"
