@@ -254,7 +254,7 @@ cn.QueryBuilder($@"
 Whatever you pass as `:raw` should be "trusted" or if it's user-input it should be sanitized correctly to avoid SQL-injection issues.
 
 ## Raw strings: Dynamic Columns (or Dynamic Tables or...)
-One example of using the **raw** modifier is when you want to use **dynamic columns** (which allows to "find references" for a column, "rename", etc):
+One example of using the **raw** modifier is when you want to use **dynamic columns**:
 
 ```cs
 var query = connection.QueryBuilder($@"SELECT * FROM Employee /**where**/");
