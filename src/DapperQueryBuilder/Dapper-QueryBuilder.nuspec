@@ -10,7 +10,6 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>DapperQueryBuilder: Dapper Query Builder using String Interpolation and Fluent API</description>
     <copyright>Copyright Rick Drizin 2020</copyright>
-    <tags>dapper;query builder;dapperquerybuilder;dapper query builder;dapper interpolation;dapper interpolated string</tags>
     <dependencies>
     </dependencies>
   </metadata>
