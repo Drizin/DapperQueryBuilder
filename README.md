@@ -591,7 +591,7 @@ This is a brand new project, and your contribution can help a lot.
 
 **Would you like to collaborate?**  
 
-Please submit a pull-request or if you prefer you can [create an issue](https://github.com/Drizin/DapperQueryBuilder/issues) or [contact me](http://drizin.io/pages/Contact/) to discuss your idea.
+Please submit a pull-request or if you prefer you can [create an issue](https://github.com/Drizin/DapperQueryBuilder/issues) or [contact me](https://rdrizin.com/pages/Contact/) to discuss your idea.
 
 
 ## License
