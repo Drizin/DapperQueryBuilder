@@ -68,7 +68,9 @@ Our classes (`QueryBuilder` and `CommandBuilder`) wrap the SQL statement and the
 
 
 
-# FAQ (Beginner Level) - Why should I use parameterized queries when using plain Dapper?
+# FAQ
+
+## Why should I use parameterized queries when using plain Dapper?
 
 The whole purpose of Dapper is to safely map our objects to the database (and to map database records back to our objects).  
 If you build SQL statements by concatenating parameters into your statement it means that:
@@ -83,7 +85,7 @@ Building dynamic SQL (**which is a TERRIBLE idea**) would be like this:
 
 ``` 
 string sql = "SELECT * FROM Product WHERE Name LIKE " 
-   + "'" + productName.Replace("'", "''")}" + "'"; 
+   + "'" + productName.Replace("'", "''") + "'"; 
 // now you pray that you've correctly sanitized inputs against sql-injection
 var products = cn.Query<Product>(sql);
 ```
@@ -103,7 +105,7 @@ var products = query.Query<Product>();
 
 
 
-# FAQ - What's the point of this library if I could just use interpolated strings directly with plain Dapper?
+## Why can't I just use interpolated strings directly with plain Dapper?
 
 Dapper does not take interpolated strings, and therefore it doesn't do any kind of manipulation magic on interpolated strings (which is exactly what we do).  
 This means that if you pass an interpolated string to Dapper it will be converted as a plain string (**so it would run as dynamic SQL, not as parameterized SQL**), meaning it has **the same issues as dynamic sql** (see previous question).  
