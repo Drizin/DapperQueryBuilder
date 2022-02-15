@@ -8,9 +8,9 @@ This library is a tiny wrapper around Dapper to help manual building of dynamic 
 
 ## Fundamental 1: Parameters are passed using String Interpolation (but it's safe against SQL injection!)
 
-By using interpolated strings we can pass parameters directly (embedded in the query) without having to use anonymous objects and worrying about matching the property names with the SQL parameters. We can just build our queries with regular string interpolation and this library **will automatically "parametrize" our interpolated objects (sql-injection safe)**.
+By using interpolated strings we can pass parameters directly (embedded in the query) without having to use anonymous objects and without worrying about matching the property names with the SQL parameters. We can just build our queries with regular string interpolation and this library **will automatically "parametrize" our interpolated objects (sql-injection safe)**.
 
-With plain Dapper we would write a query like this:
+With plain Dapper we would write a parametrized query like this:
 
 ```cs
 var products = cn
@@ -34,9 +34,21 @@ var products = cn
     AND ProductSubcategoryID = {subCategoryId}
     ORDER BY ProductId").Query<Product>;
 ```
+When `.Query<T>()` is invoked `QueryBuilder` will basically invoke Dapper equivalent (`Query<T>()`) and pass a full parameterized query (without risk of SQL-injection) even though it looks like you're just building dynamic sql. Dapper would receive a statement like this:
 
-The underlying query (that is passed to Dapper) will be fully parameterized (without risk of SQL-injection) even though it looks like you're just building dynamic sql.
-Dapper would receive a statement like `... WHERE Name LIKE @p0 AND ProductSubcategoryID = @p1` and parameters like `new { p0 = productName, p1 = subCategoryId }` - without the risk of having name mismatches or even missing to pass some parameters.
+```cs
+var products = cn
+    .Query<Product>($@"
+    SELECT * FROM Product
+    WHERE
+    Name LIKE @p0
+    AND ProductSubcategoryID = @p1
+    ORDER BY ProductId",
+    new { p0 = productName, p1 = subCategoryId }); 
+```
+
+... but without the risk of having name mismatches or even missing to pass some parameters.
+
 
 ## Fundamental 2: Query and Parameters walk side-by-side
 
@@ -83,7 +95,7 @@ If you build SQL statements by concatenating parameters into your statement it m
 
 Building dynamic SQL (**which is a TERRIBLE idea**) would be like this:
 
-``` 
+```cs 
 string sql = "SELECT * FROM Product WHERE Name LIKE " 
    + "'" + productName.Replace("'", "''") + "'"; 
 // now you pray that you've correctly sanitized inputs against sql-injection
@@ -113,7 +125,7 @@ This means that if you pass an interpolated string to Dapper it will be converte
 
 So it IS possible to use Dapper with interpolated strings (as long as you sanitize the inputs):
 
-``` 
+```cs
 cn.Execute($@"
    INSERT INTO Product (ProductName, ProductSubCategoryId)
    VALUES ( 
@@ -125,7 +137,7 @@ cn.Execute($@"
 
 But with our library this is not only safer but also much simpler:
 
-``` 
+```cs
 cn.CommandBuilder($@"
    INSERT INTO Product (ProductName, ProductSubCategoryId)
    VALUES ({productName}, {ProductSubcategoryID})
@@ -138,7 +150,7 @@ Our library makes the use of interpolated strings easier and safer because:
 - You don't have to sanitize the parameters (we rely on Dapper parameters)
 - You don't have to convert from nulls (we rely on Dapper parameters)
 - Our methods will never accept plain strings to avoid programmer mistakes
-- If you want to pass an interpolated string which is NOT a parameter you have to explicitly defined it as `:raw`
+- If you want to embed in the interpolated statement a regular string a do NOT want it to be converted to a parameter you need to explicitly describe it with the `:raw` modifier
 
 
 
@@ -146,7 +158,7 @@ Our library makes the use of interpolated strings easier and safer because:
 
 # Quickstart / NuGet Package
 
-1. Install the [NuGet package Dapper-QueryBuilder](https://www.nuget.org/packages/Dapper-QueryBuilder)
+1. Install the [NuGet package Dapper-QueryBuilder](https://www.nuget.org/packages/Dapper-QueryBuilder) (don't miss the dash to get the right package!)
 1. Start using like this:
 ```cs
 using DapperQueryBuilder;
@@ -212,25 +224,21 @@ So, basically you pass parameters as interpolated strings, but they are converte
 This is our mojo :-) 
 
 
-## \*\*where\*\* and \*\*filters\*\* helpers
+## Special keywords \*\*where\*\* and \*\*filters\*\*
 
-One of the most common reasons for dynamically building SQL statements is to append conditions (where statements) dynamically.  
-For this reason `QueryBuilder` has a method `.Where()` which can be used to append multiple filters, and those filters are saved internally.
+**\*\*where\*\*** and **\*\*filters\*\*** are special keywords that act as a placeholder to render dynamically-defined filters.  
 
-Then, when we send your query to Dapper, QueryBuilder will search for a `/**where**/` statement in our query and will replace with the filters we defined.
+One of the most common reasons for dynamically building SQL statements is to dynamically append new filters (`where` statements).  
 
-In other words, **\*\*where\*\*** is a special keyword which acts as a placeholder to render dynamically-defined filters.
+For this reason `QueryBuilder` maintains an internal list of filters (property called `Filters`) which keeps track of all filters you've added using `.Where()` method.  
 
-To sum, DapperQueryBuilder keeps track of filters in this special structure and during query execution the \*\*where\*\* keyword is replaced with those filters.
+Then, when `QueryBuilder` invokes Dapper and sends the underlying query it will search for the keyword `/**where**/` or `/**filters**/` in our query and if it exists it will replace them with the filters we added, combined with `AND` statements.
+
+
+Example: 
 
 ```cs
-int maxPrice = 1000;
-int maxWeight = 15;
-string search = "%Mountain%";
-
-var cn = new SqlConnection(connectionString);
-
-// You can build the query manually and just use QueryBuilder to replace "where" filters (if any)
+// We can write the query structure and use QueryBuilder to render the "where" filters (if any)
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
     FROM Product
     /**where**/
@@ -247,7 +255,7 @@ q.Where($"Name LIKE {search}");
 var products = q.Query<Product>();
 ```
 
-You would get this query:
+Dapper would get this query:
 
 ```sql
 SELECT ProductId, Name, ListPrice, Weight
@@ -255,7 +263,10 @@ FROM Product
 WHERE ListPrice <= @p0 AND Weight <= @p1 AND Name LIKE @p2
 ORDER BY ProductId
 ```
-If you don't need the `WHERE` keyword (if you already have other fixed conditions before), you can use `/**filters**/` instead:
+
+As you can see, `/**where**/` was replaced by `WHERE <filter1> AND <filter2> AND <filter3...>`.
+
+If we already have other fixed conditions before (we don't need the `WHERE` keyword), we can use `/**filters**/` instead:
 ```cs
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
     FROM Product
@@ -264,14 +275,19 @@ var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
     ");
 ```
 
+As you can see, `/**filters**/` would be replaced by `AND <filter1> AND <filter2> AND <filter3...>`.
 
-## Combining AND/OR Filters
 
-QueryBuilder contains an internal property called "Filters" which just keeps track of all conditions you've added using `.Where()` method.  
-By default those conditions are combined using the `AND` operator.  
+## Writing complex filters (combining AND/OR Filters) and using the Filters class
 
-If you want to write more complex filters (combining multiple AND/OR filters) we have a typed structure for that, like other query builders do.
-But differently from other builders, we don't try to reinvent SQL syntax or create a limited abstraction over SQL language, which is powerful, comprehensive, and vendor-specific, so you should still write your raw filters as if they were regular strings, and we do the rest (structuring AND/OR filters, and extracting parameters from interpolated strings):
+Like other query builders we also have a typed structure for writing complex filters, but differently from others we don't try to reinvent SQL syntax or create a limited abstraction over SQL language (which is powerful, comprehensive, and vendor-specific). So we focus on our magic (converting interpolated strings into SQL parameters), while keeping Dapper simplicity (you write your own filters), and all we have is a simple `Filters` class that can be used to create complex filter combinations:
+
+- `Filters` class basically contains a list of filters, and a combining operator (default is AND but can be changed to OR)
+- `QueryBuilder` internally contains an instance of `Filters`, which can be added using `.Where()` and can be rendered using the keywords `/**where**/` or `/**filters**/`
+- Each filter can be a simple condition (using interpolated strings) or it can recursively be another list of filters (`Filters` class).
+
+So basically it's possible to write any combination of AND/OR conditions, and it's also possible to group filters (enclose with parentheses). This is all vendor-agnostic (`AND`/`OR`/parentheses are all SQL ANSI) so it should work with any vendor.
+
 
 ```cs
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
@@ -279,7 +295,7 @@ var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
     /**where**/
     ORDER BY ProductId
     ");
-
+    
 q.Where(new Filters()
 {
     new Filter($"ListPrice >= {minPrice}"),
@@ -290,6 +306,9 @@ q.Where(new Filters(Filters.FiltersType.OR)
     new Filter($"Weight <= {maxWeight}"),
     new Filter($"Name LIKE {search}")
 });
+
+//If we wanted top-level filters to be combined with OR instead of AND:
+//q.FiltersType = Filters.FiltersType.OR;
 
 var products = q.Query<Product>();
 
