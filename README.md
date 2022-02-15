@@ -4,17 +4,14 @@
 
 We all love Dapper and how Dapper is a minimalist library.
 
-This library is a wrapper around Dapper mostly for helping building dynamic SQL queries and commands. It's based on 2 fundamentals:
+This library is a tiny wrapper around Dapper to help manual building of dynamic SQL queries and commands. It's based on 2 fundamentals:
 
-## Fundamental 1: String Interpolation instead of manually using DynamicParameters
+## Fundamental 1: Parameters are passed using String Interpolation (but it's safe against SQL injection!)
 
-By using interpolated strings we can pass parameters to Dapper without having to worry about creating and managing DynamicParameters manually.  
-You can build your queries with interpolated strings, and this library will automatically "parametrize" your values.
+By using interpolated strings we can pass parameters directly (embedded in the query) without having to use anonymous objects and worrying about matching the property names with the SQL parameters. We can just build our queries with regular string interpolation and this library **will automatically "parametrize" our interpolated objects (sql-injection safe)**.
 
-(If you just passed an interpolated string to Dapper, you would have to manually sanitize your inputs [against SQL-injection attacks](https://stackoverflow.com/a/7505842/3606250), 
-and on top of that your queries wouldn't benefit from cached execution plan).
+With plain Dapper we would write a query like this:
 
-Instead of writing like this:
 ```cs
 var products = cn
     .Query<Product>($@"
@@ -23,10 +20,11 @@ var products = cn
     Name LIKE @productName
     AND ProductSubcategoryID = @subCategoryId
     ORDER BY ProductId",
-    new { productName, subCategoryId });
+    new { productName, subCategoryId }); 
 ```
+Note that the SQL parameter names `@productName` and `@subCategoryId` must match the anonymous object (`new { productName, subCategoryId }`).
 
-**... you can just write like this:**
+**With Dapper Query Builder we can just embed variables inside the query:**
 ```cs
 var products = cn
     .QueryBuilder($@"
@@ -36,14 +34,17 @@ var products = cn
     AND ProductSubcategoryID = {subCategoryId}
     ORDER BY ProductId").Query<Product>;
 ```
-The underlying query will be fully parametrized (`Name LIKE @p0 AND ProductSubcategoryID = @p1`), without risk of SQL-injection, even though it looks like you're just building dynamic sql.
+
+The underlying query (that is passed to Dapper) will be fully parameterized (without risk of SQL-injection) even though it looks like you're just building dynamic sql.
+Dapper would receive a statement like `... WHERE Name LIKE @p0 AND ProductSubcategoryID = @p1` and parameters like `new { p0 = productName, p1 = subCategoryId }` - without the risk of having name mismatches or even missing to pass some parameters.
 
 ## Fundamental 2: Query and Parameters walk side-by-side
 
-QueryBuilder basically wraps 2 things that should always stay together: the query which you're building, and the parameters which must go together with your query.  
-This is a simple concept but it allows us to add new sql clauses (parametrized) in a single statement.
+QueryBuilder basically wraps 2 things that should always stay together: the query which you're building, and the parameters which must go together with your query.
+This is a simple concept but it allows us to dynamically add new parameterized SQL clauses/conditions in a single statement.
 
-Let's say you're building a query with a variable number of conditions. **Instead of appending multiple conditions like this**:
+This is how we would build a query with a variable number of conditions using plain Dapper:
+
 ```cs
 var dynamicParams = new DynamicParameters();
 string sql = "SELECT * FROM Product WHERE 1=1";
@@ -52,24 +53,93 @@ dynamicParams.Add("productName", productName);
 sql += " AND ProductSubcategoryID = @subCategoryId"; 
 dynamicParams.Add("subCategoryId", subCategoryId);
 var products = cn.Query<Product>(sql, dynamicParams);
+``` 
 
-// or like this:
-string sql = "SELECT * FROM Product WHERE 1=1";
-sql += $" AND Name LIKE {productName.Replace("'", "''")}"; 
-sql += $" AND ProductSubcategoryID = {subCategoryId.Replace("'", "''")}"; 
-// here is where you pray that you've correctly sanitized inputs against sql-injection
-var products = cn.Query<Product>(sql);
-```
 
-**... you can just write like this:**
+**With Dapper Query Builder the SQL statement and the associated Parameters are kept together**, making it easy to append dynamic conditions:
 ```cs
 var query = cn.QueryBuilder($"SELECT * FROM Product WHERE 1=1");
 query.Append($"AND Name LIKE {productName}"); 
 query.Append($"AND ProductSubcategoryID = {subCategoryId}"); 
 var products = query.Query<Product>(); 
 ```
-QueryBuilder will wrap both the Query and the Parameters, so that you can easily append new sql statements (and parameters) easily.  
-When you invoke Query, the underlying query and parameters are passed to Dapper.
+
+Our classes (`QueryBuilder` and `CommandBuilder`) wrap the SQL statement and the associated Parameters, and when we invoke the Query (or run the Command) the underlying statement and parameters are just passed to Dapper. So we don't have to keep statement and parameters separated and we don't have to manually use `DynamicParameters`.
+
+
+
+# FAQ (Beginner Level) - Why should I use parameterized queries when using plain Dapper?
+
+The whole purpose of Dapper is to safely map our objects to the database (and to map database records back to our objects).  
+If you build SQL statements by concatenating parameters into your statement it means that:
+
+- It would be more vulnerable to SQL injection.
+- You would have to manually sanitize your inputs [against SQL-injection attacks](https://stackoverflow.com/a/7505842)
+- You would have to manually convert null values
+- Your queries wouldn't benefit from cached execution plan
+- You would go crazy by not using Dapper like it was supposed to be used
+
+Building dynamic SQL (**which is a TERRIBLE idea**) would be like this:
+
+``` 
+string sql = "SELECT * FROM Product WHERE Name LIKE " 
+   + "'" + productName.Replace("'", "''")}" + "'"; 
+// now you pray that you've correctly sanitized inputs against sql-injection
+var products = cn.Query<Product>(sql);
+```
+
+With plain Dapper it's safer:
+```cs
+string sql = "SELECT * FROM Product WHERE Name LIKE @productName";
+var products = cn.Query<Product>(sql, new { productName });
+``` 
+
+
+**But with Dapper Query Builder it's even easier**:
+```cs
+var query = cn.QueryBuilder($"SELECT * FROM Product WHERE Name LIKE {productName}");
+var products = query.Query<Product>(); 
+```
+
+
+
+# FAQ - What's the point of this library if I could just use interpolated strings directly with plain Dapper?
+
+Dapper does not take interpolated strings, and therefore it doesn't do any kind of manipulation magic on interpolated strings (which is exactly what we do).  
+This means that if you pass an interpolated string to Dapper it will be converted as a plain string (**so it would run as dynamic SQL, not as parameterized SQL**), meaning it has **the same issues as dynamic sql** (see previous question).  
+
+
+So it IS possible to use Dapper with interpolated strings (as long as you sanitize the inputs):
+
+``` 
+cn.Execute($@"
+   INSERT INTO Product (ProductName, ProductSubCategoryId)
+   VALUES ( 
+      '{productName.Replace("'", "''")}', 
+      {ProductSubcategoryID == null ? "NULL" : int.Parse(ProductSubcategoryID).ToString()}
+   )");
+// now you pray that you've correctly sanitized inputs against sql-injection
+```
+
+But with our library this is not only safer but also much simpler:
+
+``` 
+cn.CommandBuilder($@"
+   INSERT INTO Product (ProductName, ProductSubCategoryId)
+   VALUES ({productName}, {ProductSubcategoryID})
+").Execute();
+```
+
+In other words, passing interpolated strings to Dapper is dangerous because you may forget to sanitize the inputs.  
+
+Our library makes the use of interpolated strings easier and safer because:
+- You don't have to sanitize the parameters (we rely on Dapper parameters)
+- You don't have to convert from nulls (we rely on Dapper parameters)
+- Our methods will never accept plain strings to avoid programmer mistakes
+- If you want to pass an interpolated string which is NOT a parameter you have to explicitly defined it as `:raw`
+
+
+
 
 
 # Quickstart / NuGet Package
@@ -140,12 +210,14 @@ So, basically you pass parameters as interpolated strings, but they are converte
 This is our mojo :-) 
 
 
-## \*\*where\*\* filters 
+## \*\*where\*\* and \*\*filters\*\* helpers
 
-The **\*\*where\*\*** is a special keyword which acts as a placeholder to render dynamically-defined filters:
+One of the most common reasons for dynamically building SQL statements is to append conditions (where statements) dynamically.  
+For this reason `QueryBuilder` has a method `.Where()` which can be used to append multiple filters, and those filters are saved internally.
 
-- You can append filters to QueryBuilder object using .Where() method, and those filters are saved internally.
-- When you send your query to Dapper, QueryBuilder will search for a `/**where**/` statement in your query and will replace with the filters you defined.
+Then, when we send your query to Dapper, QueryBuilder will search for a `/**where**/` statement in our query and will replace with the filters we defined.
+
+In other words, **\*\*where\*\*** is a special keyword which acts as a placeholder to render dynamically-defined filters.
 
 To sum, DapperQueryBuilder keeps track of filters in this special structure and during query execution the \*\*where\*\* keyword is replaced with those filters.
 
@@ -189,6 +261,7 @@ var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
     ORDER BY ProductId
     ");
 ```
+
 
 ## Combining AND/OR Filters
 
@@ -238,7 +311,7 @@ cmd.Execute();
 
 ## Raw strings
 
-If you want to embed raw strings in your queries (don't want them to be parametrized), you can use the **raw modifier**:
+If you want to embed raw strings in your queries (don't want them to be parameterized), you can use the **raw modifier**:
 
 ```cs
 string uniqueId = Guid.NewGuid().ToString().Substring(0, 8);
