@@ -35,6 +35,16 @@ ORDER BY ProductId
         int maxWeight = 15;
         string search = "%Mountain%";
 
+        [Test]
+        public void TestOperatorOverload()
+        {
+            string search = "%mountain%";
+            var cmd = cn.QueryBuilder()
+                + $@"SELECT * FROM [Production].[Product]"
+                + $"WHERE [Name] LIKE {search}";
+            cmd += $"AND 1=1";
+            Assert.AreEqual("SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0 AND 1=1", cmd.Sql);
+        }
 
         [Test]
         public void TestTemplateAPI()

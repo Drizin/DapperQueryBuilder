@@ -123,6 +123,15 @@ namespace DapperQueryBuilder
         }
 
         /// <summary>
+        /// Appends a statement to the current command. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
+        public static CommandBuilder operator + (CommandBuilder cmd, FormattableString fs)
+        {
+            return cmd.Append(fs);
+        }
+
+        /// <summary>
         /// Replaces a text by a replacement text<br />
         /// </summary>
         public CommandBuilder Replace(string oldValue, FormattableString newValue)

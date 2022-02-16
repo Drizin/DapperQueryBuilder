@@ -177,7 +177,7 @@ namespace DapperQueryBuilder
         #endregion
 
         /// <summary>
-        /// Appends a statement to the current command. <br />
+        /// Appends a statement to the current query. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
         /// <param name="statement">SQL command</param>
@@ -188,7 +188,7 @@ namespace DapperQueryBuilder
         }
 
         /// <summary>
-        /// Appends a statement to the current command, but before statement adds a linebreak. <br />
+        /// Appends a statement to the current query, but before statement adds a linebreak. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
         /// <param name="statement">SQL command</param>
@@ -196,6 +196,15 @@ namespace DapperQueryBuilder
         {
             _commandBuilder.AppendLine(statement);
             return this;
+        }
+
+        /// <summary>
+        /// Appends a statement to the current query. <br />
+        /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
+        /// </summary>
+        public static QueryBuilder operator +(QueryBuilder cmd, FormattableString fs)
+        {
+            return cmd.Append(fs);
         }
 
         /// <summary>

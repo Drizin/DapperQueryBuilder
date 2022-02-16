@@ -290,6 +290,17 @@ ORDER BY [ProductId]", query.Sql);
         }
 
         [Test]
+        public void TestOperatorOverload()
+        {
+            string search = "%mountain%";
+            var cmd = cn.CommandBuilder()
+                + $@"SELECT * FROM [Production].[Product]"
+                + $"WHERE [Name] LIKE {search}";
+            cmd += $"AND 1=1";
+            Assert.AreEqual("SELECT * FROM [Production].[Product] WHERE [Name] LIKE @p0 AND 1=1", cmd.Sql);
+        }
+
+        [Test]
         public void TestAutospacing2()
         {
             string search = "%mountain%";
