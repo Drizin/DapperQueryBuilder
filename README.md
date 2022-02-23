@@ -1,4 +1,5 @@
 [![Nuget](https://img.shields.io/nuget/v/Dapper-QueryBuilder?label=Dapper-QueryBuilder)](https://www.nuget.org/packages/Dapper-QueryBuilder)
+[![Downloads](https://img.shields.io/nuget/dt/Dapper-QueryBuilder.svg)](https://www.nuget.org/packages/Dapper-QueryBuilder)
 
 # Dapper Query Builder
 
@@ -15,6 +16,10 @@ By using interpolated strings we can pass parameters directly (embedded in the q
 With plain Dapper we would write a parameterized query like this:
 
 ```cs
+string productName = "%Computer%";
+int subCategoryId = 10;
+
+// Note that the SQL parameter names (@productName and @subCategoryId)...
 var products = cn
     .Query<Product>($@"
     SELECT * FROM Product
@@ -22,12 +27,14 @@ var products = cn
     Name LIKE @productName
     AND ProductSubcategoryID = @subCategoryId
     ORDER BY ProductId",
-    new { productName, subCategoryId }); 
+    new { productName, subCategoryId }); // ... must match the anonymous object
 ```
-Note that the the names of SQL parameter (`@productName` and `@subCategoryId`) must match the anonymous object (`new { productName, subCategoryId }`).
 
 **With Dapper Query Builder we can just embed variables inside the query:**
 ```cs
+string productName = "%Computer%";
+int subCategoryId = 10;
+
 var products = cn
     .QueryBuilder($@"
     SELECT * FROM Product
@@ -36,20 +43,19 @@ var products = cn
     AND ProductSubcategoryID = {subCategoryId}
     ORDER BY ProductId").Query<Product>;
 ```
-When `.Query<T>()` is invoked `QueryBuilder` will basically invoke Dapper equivalent method (`Query<T>()`) and pass a fully parameterized query (without risk of SQL-injection) even though it looks like you're just building dynamic sql. Dapper would receive a statement like this:
+When `.Query<T>()` is invoked `QueryBuilder` will basically invoke Dapper equivalent method (`Query<T>()`) and pass a fully parameterized query (without risk of SQL-injection) even though it looks like you're just building dynamic sql.  
 
-```cs
-var products = cn
-    .Query<Product>(@"
-    SELECT * FROM Product
-    WHERE
-    Name LIKE @p0
-    AND ProductSubcategoryID = @p1
-    ORDER BY ProductId",
-    new { p0 = productName, p1 = subCategoryId }); 
-```
+Dapper would receive a fully parameterized query, but without the risk of having mismatches in the names or number of parameters. Dapper would get this sql:
 
-... but without the risk of having name mismatches or even missing to pass some parameters.
+```sql
+SELECT * FROM Product
+WHERE
+Name LIKE @p0
+AND ProductSubcategoryID = @p1
+ORDER BY ProductId
+``` 
+and these parameters: ```new { p0 = productName, p1 = subCategoryId } ```
+
 
 
 ## Fundamental 2: Query and Parameters walk side-by-side
@@ -133,7 +139,7 @@ var products = q.Query<Product>();
 // Create a QueryBuilder with a static query.
 // QueryBuilder will automatically convert interpolated parameters to Dapper parameters (injection-safe)
 var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight FROM Product 
-                          WHERE ListPrice <= {maxPrice}";
+                          WHERE ListPrice <= {maxPrice}
                           ORDER BY ProductId");
 
 // Query<T>() will automatically pass our query and injection-safe SqlParameters to Dapper
@@ -705,6 +711,54 @@ By enforcing that all methods only take `FormattableString` we can be confident 
 The only way you can pass an unsafe string in your interpolation is if you explicitly add the **`:raw` modifier**, so it's easy to review all statements for vulnerabilities.  
 As Alan Kay says, "Simple things should be simple and complex things should be possible" - so interpolating regular sql parameters is very simple, while interpolating plain strings is still possible.
 
+## Is building queries with string interpolation really safe?
+
+In our library String Interpolation is just an abstraction used for hiding the complexity of manually creating SqlParameters.  
+This library is as safe as possible because it never accepts plain strings, so there's no risk of accidentally converting an interpolated string into a vulnerable string. But obviously there are a few possible scenarios where mistakes could happen.
+
+**First possible mistake - using raw modifier for things that should be parameters:**
+
+```cs
+using DapperQueryBuilder;
+
+// If you don't understand what raw is for, DON'T USE IT - code below is unsafe!
+var products = cn.QueryBuilder($@"
+    SELECT * FROM Product WHERE ProductId={productId:raw}"
+).Query<Product>();
+```
+
+**Second possible mistake - passing interpolated strings to Dapper instead of DapperQueryBuilder:**
+
+```cs
+using Dapper;
+
+// UNSAFE CODE. Dapper will get an unsafe (not parameterized) query.
+var products = cn.Query<Product>($@"
+    SELECT * FROM Product WHERE ProductId={productId}"
+);
+
+// To avoid this type of mistake you can just avoid Dapper namespace
+// and just use "using DapperQueryBuilder;"
+```
+
+**Third possible mistake - Create a "fake" FormattableString by passing an unsafe plain string to FormattableStringFactory:**
+
+```cs
+using DapperQueryBuilder;
+using System.Runtime.CompilerServices; // needs System.Runtime.dll
+
+// Explicitly create an interpolated string in a totally incorrect way
+var products = cn.QueryBuilder(FormattableStringFactory.Create($@"
+    SELECT * FROM Product WHERE ProductId={productId}")
+).Query<Product>();
+
+// FormattableStringFactory.Create above is used totally incorrect.
+// Basically the interpolated string will be converted into an unsafe string
+// and then it's converted back into a fake interpolated string.
+
+```
+
+
 ## How can I use Dapper async extensions?
 
 This documentation is mostly using sync methods, but we have [facades](/src/DapperQueryBuilder/ICompleteCommandExtensions.cs) for **all** Dapper extensions, including `ExecuteAsync()`, `QueryAsync<T>`, etc. 
@@ -758,7 +812,7 @@ parms.Add("categoryId", categoryId);
 string where = (filters.Any() ? " WHERE " + string.Join(" AND ", filters) : "");
 
 var products = cn.Query<Product>($@"
-    SELECT * FROM Product"
+    SELECT * FROM Product
     {where}
     ORDER BY ProductId", parms);
 ```
