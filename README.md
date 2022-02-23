@@ -1,3 +1,5 @@
+[![Nuget](https://img.shields.io/nuget/v/Dapper-QueryBuilder?label=Dapper-QueryBuilder)](https://www.nuget.org/packages/Dapper-QueryBuilder)
+
 # Dapper Query Builder
 
 **Dapper Query Builder using String Interpolation and Fluent API**
