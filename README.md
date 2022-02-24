@@ -41,7 +41,8 @@ var products = cn
     WHERE
     Name LIKE {productName}
     AND ProductSubcategoryID = {subCategoryId}
-    ORDER BY ProductId").Query<Product>;
+    ORDER BY ProductId"
+    ).Query<Product>;
 ```
 When `.Query<T>()` is invoked `QueryBuilder` will basically invoke Dapper equivalent method (`Query<T>()`) and pass a fully parameterized query (without risk of SQL-injection) even though it looks like you're just building dynamic sql.  
 
@@ -138,9 +139,10 @@ var products = q.Query<Product>();
 ```cs
 // Create a QueryBuilder with a static query.
 // QueryBuilder will automatically convert interpolated parameters to Dapper parameters (injection-safe)
-var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight FROM Product 
-                          WHERE ListPrice <= {maxPrice}
-                          ORDER BY ProductId");
+var q = cn.QueryBuilder($@"
+    SELECT ProductId, Name, ListPrice, Weight FROM Product 
+    WHERE ListPrice <= {maxPrice}
+    ORDER BY ProductId");
 
 // Query<T>() will automatically pass our query and injection-safe SqlParameters to Dapper
 var products = q.Query<Product>();
@@ -157,7 +159,7 @@ One of the top reasons for dynamically building SQL statements is to dynamically
 
 ```cs
 // create a QueryBuilder with initial query
-var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight FROM Product WHERE 1=1");
+var q = cn.QueryBuilder($"SELECT ProductId, Name, ListPrice, Weight FROM Product WHERE 1=1");
 
 // Dynamically append whatever statements you need, and QueryBuilder will automatically 
 // convert interpolated parameters to Dapper parameters (injection-safe)
@@ -208,7 +210,8 @@ Example:
 
 ```cs
 // We can write the query structure and use QueryBuilder to render the "where" filters (if any)
-var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
+var q = cn.QueryBuilder($@"
+    SELECT ProductId, Name, ListPrice, Weight
     FROM Product
     /**where**/
     ORDER BY ProductId
@@ -232,7 +235,8 @@ When Dapper is invoked we replace the `/**where**/` by `WHERE <filter1> AND <fil
 
 **/\*\*filters\*\*/** is exactly like **/\*\*where\*\*/**, but it's used if we already have other fixed conditions before:
 ```cs
-var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
+var q = cn.QueryBuilder($@"
+    SELECT ProductId, Name, ListPrice, Weight
     FROM Product
     WHERE Price>{minPrice} /**filters**/
     ORDER BY ProductId
@@ -251,7 +255,8 @@ Each filter (inside a parent list of `Filters`) can be a simple condition (using
 and this can be used to write complex combinations of AND/OR conditions (inner filters filters are grouped by enclosing parentheses):
 
 ```cs
-var q = cn.QueryBuilder(@"SELECT ProductId, Name, ListPrice, Weight
+var q = cn.QueryBuilder($@"
+    SELECT ProductId, Name, ListPrice, Weight
     FROM Product
     /**where**/
     ORDER BY ProductId
@@ -320,7 +325,7 @@ When we want to use regular string interpolation for building up our queries/com
 One popular example of the **raw modifier** is when we want to use **dynamic columns**:
 
 ```cs
-var query = connection.QueryBuilder($@"SELECT * FROM Employee WHERE 1=1");
+var query = connection.QueryBuilder($"SELECT * FROM Employee WHERE 1=1");
 foreach(var filter in filters)
     query += $" AND {filter.ColumnName:raw} = {filter.Value}";
 ```
@@ -328,7 +333,7 @@ foreach(var filter in filters)
 Or:
 
 ```cs
-var query = connection.QueryBuilder($@"SELECT * FROM Employee /**where**/");
+var query = connection.QueryBuilder($"SELECT * FROM Employee /**where**/");
 foreach(var filter in filters)
     query.Where($"{filter.ColumnName:raw} = {filter.Value}");
 ```
@@ -819,7 +824,7 @@ var products = cn.Query<Product>($@"
 
 **With DapperQueryBuilder it's much easier to write queries with dynamic filters:**
 ```cs
-var query = cn.QueryBuilder(@"
+var query = cn.QueryBuilder($@"
     SELECT * FROM Product 
     /**where**/ 
     ORDER BY ProductId");
@@ -833,7 +838,7 @@ var products = query.Query<Product>();
 
 or without `/**where**/`:
 ```cs
-var query = cn.QueryBuilder(@"SELECT * FROM Product WHERE 1=1");
+var query = cn.QueryBuilder($"SELECT * FROM Product WHERE 1=1");
 query += $"AND Name LIKE {productName}";
 query += $"AND CategoryId = {categoryId}";
 query += $"ORDER BY ProductId";
