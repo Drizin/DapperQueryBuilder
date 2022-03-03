@@ -65,7 +65,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public static SqlMapper.GridReader QueryMultiple(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return command.Connection.QueryMultiple(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+            return command.Connection.QueryMultiple(sql: command.Sql, param: command.Parameters.DapperParameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace DapperQueryBuilder
         /// </summary>
         public static Task<SqlMapper.GridReader> QueryMultipleAsync(this ICompleteCommand command, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return command.Connection.QueryMultipleAsync(sql: command.Sql, param: command.Parameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
+            return command.Connection.QueryMultipleAsync(sql: command.Sql, param: command.Parameters.DapperParameters, transaction: transaction, commandTimeout: commandTimeout, commandType: commandType);
         }
 
         #endregion

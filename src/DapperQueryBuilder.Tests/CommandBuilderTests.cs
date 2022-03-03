@@ -739,5 +739,34 @@ select 'ok'
                 Assert.AreEqual(query.Parameters.Get<List<int>>("parray2"), numList);
             }
         }
+
+        [Test]
+        public void QueryMultipleStoredProcedure()
+        {
+            //AdventureWorks does not contain a proc which returns multiple result sets, so create our own
+            int a = cn.CommandBuilder($@"
+CREATE OR ALTER PROCEDURE [dbo].[uspGetEmployeeManagers_Twice]
+    @BusinessEntityID [int]
+AS
+BEGIN
+    EXEC [dbo].[uspGetEmployeeManagers] @BusinessEntityID = @BusinessEntityID
+    EXEC [dbo].[uspGetEmployeeManagers] @BusinessEntityID = @BusinessEntityID
+
+END").Execute();
+
+            var q = cn.CommandBuilder($"[dbo].[uspGetEmployeeManagers_Twice]")
+                .AddParameter("BusinessEntityID", 280);
+
+            using (var gridReader = q.QueryMultiple(commandType: CommandType.StoredProcedure))
+            {
+                var r = gridReader.Read<dynamic>();
+                int count = r.Count();
+                Assert.That(count > 0);
+                r = gridReader.Read<dynamic>();
+                Assert.AreEqual(count, r.Count());
+            }
+        }
+
+
     }
 }
