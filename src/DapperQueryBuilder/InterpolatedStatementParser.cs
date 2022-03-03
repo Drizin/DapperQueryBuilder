@@ -136,7 +136,7 @@ namespace DapperQueryBuilder
                     });
 
 
-                    var nestedStatement = new InterpolatedStatementParser(innerSql, innerQuery.Parameters.Select(p => p.Value.Value).ToArray());
+                    var nestedStatement = new InterpolatedStatementParser(innerSql, innerQuery.Parameters.Values.Select(p => p.Value).ToArray());
                     string subSql = nestedStatement.Sql;
                     if (nestedStatement.Parameters.Any())
                     {
