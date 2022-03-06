@@ -741,6 +741,17 @@ select 'ok'
         }
 
         [Test]
+        public void SimpleQueryStoredProcedure()
+        {
+            var q = cn.CommandBuilder($"[dbo].[uspGetEmployeeManagers]")
+                .AddParameter("BusinessEntityID", 280);
+
+            var r = q.Query<dynamic>(commandType: CommandType.StoredProcedure);
+            int count = r.Count();
+            Assert.That(count > 0);
+        }
+
+        [Test]
         public void QueryMultipleStoredProcedure()
         {
             //AdventureWorks does not contain a proc which returns multiple result sets, so create our own
@@ -766,7 +777,6 @@ END").Execute();
                 Assert.AreEqual(count, r.Count());
             }
         }
-
 
     }
 }
