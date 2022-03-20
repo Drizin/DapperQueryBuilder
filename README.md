@@ -42,7 +42,7 @@ var products = cn
     Name LIKE {productName}
     AND ProductSubcategoryID = {subCategoryId}
     ORDER BY ProductId"
-    ).Query<Product>;
+    ).Query<Product>();
 ```
 When `.Query<T>()` is invoked `QueryBuilder` will basically invoke Dapper equivalent method (`Query<T>()`) and pass a fully parameterized query (without risk of SQL-injection) even though it looks like you're just building dynamic sql.  
 
