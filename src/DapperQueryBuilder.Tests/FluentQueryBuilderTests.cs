@@ -289,11 +289,13 @@ ORDER BY cat.[Name]
                 .Where($"[ListPrice] <= {maxPrice}")
                 .Where($"[Weight] <= {maxWeight}")
                 .Where($"[Name] LIKE {search}");
-            
+
+            short[] statuses = {1, 2, 5};
             var customerOrdersSubQuery = cn.FluentQueryBuilder()
                             .Select($"SalesOrderID")
                             .From($"[Sales].[SalesOrderHeader]")
-                            .Where($"[CustomerId] = {customerId}");
+                            .Where($"[CustomerId] = {customerId}")
+                            .Where($"[Status] IN {statuses}");
 
             var finalQuery = cn
                 .QueryBuilder($"SELECT * FROM [Sales].[SalesOrderDetail]")
@@ -306,7 +308,7 @@ FROM [Production].[Product]
 WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
 ) AND [SalesOrderId] IN (SELECT SalesOrderID
 FROM [Sales].[SalesOrderHeader]
-WHERE [CustomerId] = @p3
+WHERE [CustomerId] = @p3 AND [Status] IN @parray4
 )";
 
             Assert.AreEqual(expected, finalQuery.Sql);
@@ -314,10 +316,12 @@ WHERE [CustomerId] = @p3
             Assert.That(finalQuery.Parameters.ParameterNames.Contains("p1"));
             Assert.That(finalQuery.Parameters.ParameterNames.Contains("p2"));
             Assert.That(finalQuery.Parameters.ParameterNames.Contains("p3"));
+            Assert.That(finalQuery.Parameters.ParameterNames.Contains("parray4"));
             Assert.AreEqual(finalQuery.Parameters.Get<int>("p0"), maxPrice);
             Assert.AreEqual(finalQuery.Parameters.Get<int>("p1"), maxWeight);
             Assert.AreEqual(finalQuery.Parameters.Get<string>("p2"), search);
             Assert.AreEqual(finalQuery.Parameters.Get<int>("p3"), customerId);
+            Assert.AreEqual(finalQuery.Parameters.Get<short[]>("parray4"), statuses);
 
             var orderItems = finalQuery.Query();
 
