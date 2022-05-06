@@ -165,7 +165,7 @@ q += $"WHERE c.[Name] IN {categories}";
 ## Fluent API (Chained-methods)
 
 ```cs
-var q = cn.QueryBuilder()
+var q = cn.FluentQueryBuilder()
 	.Select($"ProductId")
 	.Select($"Name")
 	.Select($"ListPrice")
