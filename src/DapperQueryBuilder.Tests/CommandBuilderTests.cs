@@ -633,6 +633,26 @@ INNER JOIN [Table2] on [Table1].Table2Id=[Table2].Id and [Table2].Name=@p1 WHERE
         }
 
         [Test]
+        public void TestQueryBuilderWithSelect()
+        {
+            var query = cn.QueryBuilder(
+$@"SELECT 
+    *
+    /**selects**/ 
+FROM 
+    [Table1]");
+
+            query.Select($"'Test' as AnotherColumn").Select($"'Test2' as AnotherColumn2");
+
+            Assert.AreEqual(
+@"SELECT 
+    *
+    , 'Test' as AnotherColumn, 'Test2' as AnotherColumn2 
+FROM 
+    [Table1]", query.Sql);
+        }
+
+        [Test]
         public void ArrayTest()
         {
             //https://github.com/Drizin/DapperQueryBuilder/issues/22
