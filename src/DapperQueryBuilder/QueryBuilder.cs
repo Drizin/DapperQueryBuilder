@@ -20,6 +20,7 @@ namespace DapperQueryBuilder
         #region Members
         private readonly Filters _filters = new Filters();
         private readonly List<string> _froms = new List<string>();
+        private readonly List<string> _selects = new List<string>();
         private readonly CommandBuilder _commandBuilder;
         #endregion
 
@@ -160,6 +161,23 @@ namespace DapperQueryBuilder
                         finalSql.Replace("{joins}", froms);
                 }
 
+                if (_selects.Any())
+                {
+                    string selects = string.Join(", ", _selects);
+
+                    if (finalSql.Length > 0)
+                    {
+                        if ( finalSql.ToString().Contains("/**select**/"))
+                            finalSql.Replace("/**select**/", "SELECT " + selects);
+                        else if ( finalSql.ToString().Contains("{select}"))
+                            finalSql.Replace("{select}", "SELECT " + selects);
+                        else if (finalSql.ToString().Contains("/**selects**/"))
+                            finalSql.Replace("/**selects**/", ", " + selects);
+                        else if ( finalSql.ToString().Contains("{selects}"))
+                            finalSql.Replace("{selects}", ", " + selects);
+                    }
+                }
+
                 return finalSql.ToString();
             }
         }
@@ -219,6 +237,19 @@ namespace DapperQueryBuilder
                 sql = (Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql) ?? sql);
             }
             _froms.Add(sql);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a new column to the SELECT clause.
+        /// </summary>
+        public virtual QueryBuilder Select(FormattableString selectString)
+        {
+            var parsedStatement = new InterpolatedStatementParser(selectString);
+            if (parsedStatement.Parameters.Any())
+                _selects.Add(Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql));
+            else
+                _selects.Add(parsedStatement.Sql);
             return this;
         }
     }
