@@ -876,9 +876,13 @@ That's why we decided to focus on our magic (converting interpolated strings int
 In other words, we won't try to reinvent SQL syntax or create a limited abstraction over SQL language.
 
 
-# Collaborate
+## How to Collaborate?
 
 Please submit a pull-request or if you want to make a sugestion you can [create an issue](https://github.com/Drizin/DapperQueryBuilder/issues) or [contact me](https://rdrizin.com/pages/Contact/).
+
+## Stargazers over time
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Drizin/DapperQueryBuilder&type=Date)](https://star-history.com/#Drizin/DapperQueryBuilder&Date)
 
 
 ## License
