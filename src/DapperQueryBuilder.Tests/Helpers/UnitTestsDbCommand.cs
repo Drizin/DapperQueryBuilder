@@ -11,9 +11,11 @@ namespace DapperQueryBuilder.Tests
     public class UnitTestsDbCommand : IDbCommand
     {
         private readonly IDbCommand _cmd;
-        public UnitTestsDbCommand(IDbCommand command)
+        private readonly UnitTestsDbConnection _ownerConnection;
+        public UnitTestsDbCommand(IDbCommand command, UnitTestsDbConnection ownerConnection)
         {
             _cmd = command;
+            _ownerConnection = ownerConnection;
         }
 
         public string CommandText { get => _cmd.CommandText; set => _cmd.CommandText = value; }
@@ -43,27 +45,40 @@ namespace DapperQueryBuilder.Tests
 
         public int ExecuteNonQuery()
         {
+            SaveCurrentCommand();
             return _cmd.ExecuteNonQuery();
         }
 
         public IDataReader ExecuteReader()
         {
+            SaveCurrentCommand();
             return _cmd.ExecuteReader();
         }
 
         public IDataReader ExecuteReader(CommandBehavior behavior)
         {
+            SaveCurrentCommand();
             return _cmd.ExecuteReader(behavior);
         }
 
         public object ExecuteScalar()
         {
+            SaveCurrentCommand();
             return _cmd.ExecuteScalar();
         }
 
         public void Prepare()
         {
+            SaveCurrentCommand();
             _cmd.Prepare();
+        }
+
+        private void SaveCurrentCommand()
+        {
+            var cmdDetails = new UnitTestsDbConnection.ExecutedCommandDetails() { CommandText = _cmd.CommandText };
+            foreach (var parm in _cmd.Parameters)
+                cmdDetails.Parameters.Add(((IDbDataParameter)parm).ParameterName, parm);
+            _ownerConnection.PreviousCommands.Add(cmdDetails);
         }
 
     }

@@ -10,4 +10,4 @@ REM dotnet pack DapperQueryBuilder\DapperQueryBuilder.csproj -c release -o .\pac
 REM Why with dotnet pack we can't get deterministic builds?
 
 dotnet build -c release .\DapperQueryBuilder\DapperQueryBuilder.csproj
-"C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" /t:Pack DapperQueryBuilder\ /p:targetFrameworks="netstandard2.0;net472" /p:Configuration=Release /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:PackageOutputPath=..\packages-local\ /verbosity:minimal /p:ContinuousIntegrationBuild=true
+"C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" /t:Pack .\DapperQueryBuilder\\DapperQueryBuilder.csproj /p:targetFrameworks="netstandard2.0;net472" /p:Configuration=Release /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:PackageOutputPath=..\packages-local\ /verbosity:minimal /p:ContinuousIntegrationBuild=true

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Text;
 
 namespace DapperQueryBuilder.Tests
@@ -11,7 +12,9 @@ namespace DapperQueryBuilder.Tests
     public class UnitTestsDbConnection : IDbConnection
     {
         private readonly IDbConnection _conn;
-        public IDbCommand LastCommand { get; set; }
+
+        // Since Dapper clears the parameters of IDbCommands after their execution we have to store a copy of the information instead of storing the IDbCommand itself
+        public List<ExecutedCommandDetails> PreviousCommands { get; set; } = new List<ExecutedCommandDetails>();
 
         public UnitTestsDbConnection(IDbConnection connection)
         {
@@ -48,8 +51,7 @@ namespace DapperQueryBuilder.Tests
 
         public IDbCommand CreateCommand()
         {
-            LastCommand = new UnitTestsDbCommand(_conn.CreateCommand());
-            return LastCommand;
+            return new UnitTestsDbCommand(_conn.CreateCommand(), this);
         }
 
         public void Dispose()
@@ -60,6 +62,13 @@ namespace DapperQueryBuilder.Tests
         public void Open()
         {
             _conn.Open();
+        }
+
+        [DebuggerDisplay("{CommandText}")]
+        public class ExecutedCommandDetails
+        {
+            public string CommandText { get; set; }
+            public Dictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
         }
     }
 

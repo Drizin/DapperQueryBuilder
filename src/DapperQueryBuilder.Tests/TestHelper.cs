@@ -16,6 +16,7 @@ namespace DapperQueryBuilder.Tests
         }
         public static string GetMSSQLConnectionString() => Configuration.GetConnectionString("MSSQLConnection");
         public static string GetPostgreSQLConnectionString() => Configuration.GetConnectionString("PostgreSQLConnection");
+        public static string GetMySQLConnectionString() => Configuration.GetConnectionString("MySQLConnection");
 
     }
 }
