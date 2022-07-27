@@ -212,6 +212,55 @@ namespace DapperQueryBuilder
                             Length = int.MaxValue
                         };
 
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeString.Match(f)) != null && m.Success) // String(maxlength) / nvarchar(maxlength) / String / nvarchar
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = false,
+                            IsFixedLength = false,
+                            Value = str,
+                            Length = (string.IsNullOrEmpty(m.Groups["maxlength"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["maxlength"].Value))
+                        });
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeAnsiString.Match(f)) != null && m.Success) // AnsiString(maxlength) / varchar(maxlength) / AnsiString / varchar
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = true,
+                            IsFixedLength = false,
+                            Value = str,
+                            Length = (string.IsNullOrEmpty(m.Groups["maxlength"].Value) ? Math.Max(DbString.DefaultLength, ((string)arg).Length) : int.Parse(m.Groups["maxlength"].Value))
+                        });
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeStringFixedLength.Match(f)) != null && m.Success) // StringFixedLength(length) / nchar(length) / StringFixedLength / nchar
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = false,
+                            IsFixedLength = true,
+                            Value = str,
+                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? ((string)arg).Length : int.Parse(m.Groups["length"].Value))
+                        });
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeAnsiStringFixedLength.Match(f)) != null && m.Success) // AnsiStringFixedLength(length) / char(length) / AnsiStringFixedLength / char
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = true,
+                            IsFixedLength = true,
+                            Value = str,
+                            Length = (string.IsNullOrEmpty(m.Groups["length"].Value) ? ((string)arg).Length : int.Parse(m.Groups["length"].Value))
+                        });
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeText.Match(f)) != null && m.Success) // text / varchar(MAX) / varchar(-1)
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = false,
+                            IsFixedLength = true,
+                            Value = str,
+                            Length = int.MaxValue
+                        });
+                    else if (arg is IEnumerable<string> && (m = regexDbTypeNText.Match(f)) != null && m.Success) // ntext / nvarchar(MAX) / nvarchar(-1)
+                        arg = ((IEnumerable<string>)arg).Select(str => new DbString()
+                        {
+                            IsAnsi = true,
+                            IsFixedLength = true,
+                            Value = str,
+                            Length = int.MaxValue
+                        });
+
                     else if (!(arg is DbString) && dbType == null && Enum.TryParse<System.Data.DbType>(value: f, ignoreCase: true, result: out parsedDbType))
                     {
                         dbType = parsedDbType;

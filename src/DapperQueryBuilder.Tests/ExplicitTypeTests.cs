@@ -130,5 +130,27 @@ namespace DapperQueryBuilder.Tests
         }
 
 
+        [Test(Description = "Arrays should allow explicit types")]
+        public void TestExplicitTypes6()
+        {
+            List<string> productNames = new List<string>()
+            {
+                "Blade",
+                "Decal 1",
+                "Decal 2"
+            };
+
+            var cmd1 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] IN {productNames:nvarchar(50)}");
+            var products = cmd1.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.NVarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == 50);
+
+
+            var cmd2 = cn.QueryBuilder($"SELECT * FROM [Production].[Product] p WHERE [Name] IN {productNames:varchar(30)}");
+            products = cmd2.Query<Product>();
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).SqlDbType == SqlDbType.VarChar);
+            Assert.That(((SqlParameter)cn.LastCommand.Parameters[0]).Size == 30);
+        }
+
     }
 }
