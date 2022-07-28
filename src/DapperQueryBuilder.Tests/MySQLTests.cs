@@ -59,6 +59,36 @@ namespace DapperQueryBuilder.Tests
             Assert.AreEqual(cn.PreviousCommands.Last().CommandText, "SELECT * FROM authors WHERE name_last IN (@parray01,@parray02)");
         }
 
+        [Test]
+        public void TestNullableArrays()
+        {
+            int[]? ids = new[] { 1, 2 };
+
+            var authors = cn.QueryBuilder($"SELECT * FROM authors WHERE author_id IN {ids}").Query<Author>();
+            Assert.That(authors.Any());
+
+            string[]? lastNames = new string[]
+            {
+                "Kafka",
+                "de Assis",
+            };
+
+            authors = cn.QueryBuilder($"SELECT * FROM authors WHERE name_last IN {lastNames}").Query<Author>();
+            Assert.AreEqual(cn.PreviousCommands.Last().CommandText, "SELECT * FROM authors WHERE name_last IN (@parray01,@parray02)");
+
+            AuthorsEnum[]? authorIds = new AuthorsEnum[] { AuthorsEnum.Kafka, AuthorsEnum.MachadoDeAssis };
+            authors = cn.QueryBuilder($"SELECT * FROM authors WHERE author_id IN {authorIds}").Query<Author>();
+            Assert.That(authors.Any());
+            Assert.AreEqual(cn.PreviousCommands.Last().CommandText, "SELECT * FROM authors WHERE author_id IN (@parray01,@parray02)");
+
+        }
+
+        enum AuthorsEnum
+        {
+            Kafka = 1,
+            MachadoDeAssis = 2,
+        }
+
 
     }
 }
