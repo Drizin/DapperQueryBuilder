@@ -1,5 +1,7 @@
 [![Nuget](https://img.shields.io/nuget/v/Dapper-QueryBuilder?label=Dapper-QueryBuilder)](https://www.nuget.org/packages/Dapper-QueryBuilder)
 [![Downloads](https://img.shields.io/nuget/dt/Dapper-QueryBuilder.svg)](https://www.nuget.org/packages/Dapper-QueryBuilder)
+[![Nuget](https://img.shields.io/nuget/v/DapperQueryBuilder.StrongName?label=DapperQueryBuilder.StrongName)](https://www.nuget.org/packages/DapperQueryBuilder.StrongName)
+[![Downloads](https://img.shields.io/nuget/dt/DapperQueryBuilder.StrongName.svg)](https://www.nuget.org/packages/DapperQueryBuilder.StrongName)
 
 # Dapper Query Builder
 
@@ -91,7 +93,7 @@ Our classes (`QueryBuilder` and `CommandBuilder`) wrap the SQL statement and the
 
 # Quickstart / NuGet Package
 
-1. Install the [NuGet package Dapper-QueryBuilder](https://www.nuget.org/packages/Dapper-QueryBuilder) (don't forget the dash to get the right package!)
+1. Install the [NuGet package Dapper-QueryBuilder](https://www.nuget.org/packages/Dapper-QueryBuilder) (don't forget the dash to get the right package!) or [NuGet package DapperQueryBuilder.StrongName](https://www.nuget.org/packages/DapperQueryBuilder.StrongName)
 1. Start using like this:
 ```cs
 using DapperQueryBuilder;

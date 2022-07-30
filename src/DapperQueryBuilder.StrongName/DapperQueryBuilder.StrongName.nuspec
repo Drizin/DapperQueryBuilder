@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Dapper-QueryBuilder</id>
-    <title>DapperQueryBuilder</title>
+    <id>DapperQueryBuilder.StrongName</id>
+    <title>DapperQueryBuilder (Strong Named)</title>
     <authors>Rick Drizin</authors>
     <owners>Rick Drizin</owners>
     <license type="expression">MIT</license>
@@ -14,7 +14,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\$configuration$\DapperQueryBuilder.*" target="lib\net472" />
-    <file src="bin\$configuration$\DapperQueryBuilder.*" target="lib\netstandard2.0" />
+    <file src="bin\$configuration$\DapperQueryBuilder.StrongName.*" target="lib\net472" />
+    <file src="bin\$configuration$\DapperQueryBuilder.StrongName.*" target="lib\netstandard2.0" />
   </files>
 </package>

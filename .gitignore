@@ -349,3 +349,5 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /src/DapperQueryBuilder/DapperQueryBuilder.xml
+/src/DapperQueryBuilder.StrongName/DapperQueryBuilder.StrongName.xml
+/src/release.snk

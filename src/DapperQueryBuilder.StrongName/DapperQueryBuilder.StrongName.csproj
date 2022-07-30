@@ -10,20 +10,20 @@
     <Company>Rick Drizin</Company>
     <Version>1.2.7</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Title>DapperQueryBuilder</Title>
-    <PackageId>Dapper-QueryBuilder</PackageId>
-    <DocumentationFile>DapperQueryBuilder.xml</DocumentationFile>
+    <Title>DapperQueryBuilder (Strong Named)</Title>
+    <PackageId>DapperQueryBuilder.StrongName</PackageId>
+    <DocumentationFile>DapperQueryBuilder.StrongName.xml</DocumentationFile>
 	<PackageTags>dapper;query-builder;query builder;dapperquerybuilder;dapper-query-builder;dapper-interpolation;dapper-interpolated-string</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
 	<EmbedUntrackedSources>true</EmbedUntrackedSources>
     <!-- Include symbol files (*.pdb) in the main .nupkg -->
 	<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
-    <AssemblyName>DapperQueryBuilder</AssemblyName>
+    <AssemblyName>DapperQueryBuilder.StrongName</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-	<None Include="NuGetReadMe.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Dapper" Version="2.0.123" />
+	<None Include="..\DapperQueryBuilder\NuGetReadMe.md" Pack="true" PackagePath="\" />
+    <PackageReference Include="Dapper.StrongName" Version="2.0.123" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
@@ -33,14 +33,24 @@
 
   <Choose>
     <When Condition="'$(Configuration)' == 'Debug'">
-      <ItemGroup>
-        <InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
-      </ItemGroup>
+      <PropertyGroup>
+        <SignAssembly>True</SignAssembly>
+        <AssemblyOriginatorKeyFile>..\debug.snk</AssemblyOriginatorKeyFile>
+      </PropertyGroup>
     </When>
     <Otherwise>
-      <ItemGroup>
-        <InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
-      </ItemGroup>
+      <PropertyGroup>
+        <SignAssembly>True</SignAssembly>
+        <AssemblyOriginatorKeyFile>..\release.snk</AssemblyOriginatorKeyFile>
+      </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+    <Compile Include="..\DapperQueryBuilder\**\*.cs" Exclude="..\DapperQueryBuilder\obj\**\*.cs" />
+  </ItemGroup>
+
+
 </Project>
+
