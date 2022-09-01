@@ -34,6 +34,11 @@ namespace DapperQueryBuilder
         IWhereBuilder Where(FormattableString filter);
 
         /// <summary>
+        /// Adds a new condition to groupby clauses.
+        /// </summary>
+        IGroupByBuilder GroupBy(FormattableString groupBy);
+
+        /// <summary>
         /// Adds one or more column(s) to orderby clauses.
         /// </summary>
         IOrderByBuilder OrderBy(FormattableString orderBy);

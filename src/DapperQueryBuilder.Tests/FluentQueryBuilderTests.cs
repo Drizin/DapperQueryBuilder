@@ -273,7 +273,34 @@ ORDER BY cat.[Name]
 
         }
 
+        [Test]
+        public void GroupByWithNoWhereTest()
+        {
+            var q = cn.FluentQueryBuilder()
+                .Select($"cat.[Name] as [Category]")
+                .Select($"AVG(p.[ListPrice]) as [AveragePrice]")
+                .From($"[Production].[Product] p")
+                .From($"LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
+                .From($"LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]")
+                .GroupBy($"cat.[Name]")
+                .Having($"COUNT(*)>{5}");
 
+            string expected =
+                @"SELECT cat.[Name] as [Category], AVG(p.[ListPrice]) as [AveragePrice]
+FROM [Production].[Product] p
+LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
+LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]
+GROUP BY cat.[Name]
+HAVING COUNT(*)>@p0
+";
+
+            Assert.AreEqual(expected, q.Sql);
+
+            var results = q.Query();
+
+            Assert.That(results.Any());
+
+        }
 
         [Test]
         public void FluentQueryBuilderInsideCommandBuilder()
