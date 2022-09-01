@@ -10,6 +10,16 @@ namespace DapperQueryBuilder
     public interface IFromBuilder : ICompleteCommand
     {
         /// <summary>
+        /// Adds one column to the select clauses
+        /// </summary>
+        ISelectBuilder Select(FormattableString column);
+
+        /// <summary>
+        /// Adds one or more columns to the select clauses
+        /// </summary>
+        ISelectBuilder Select(params FormattableString[] moreColumns);
+
+        /// <summary>
         /// Adds a new table to from clauses. <br />
         /// "FROM" word is optional. <br />
         /// You can add an alias after table name. <br />
