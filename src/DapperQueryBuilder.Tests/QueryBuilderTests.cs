@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -123,6 +122,52 @@ ORDER BY ProductId
             var p1 = q.Parameters["p1"];
             Assert.AreEqual(123, p0.Value);
             Assert.AreEqual(321, p1.Value);
+        }
+
+        [Test]
+        public void TestLimitWithoutOffset()
+        {
+            var q = cn.QueryBuilder(
+$@"SELECT ProductId, Name, ListPrice, Weight
+FROM [Production].[Product]
+/**where**/
+ORDER BY ProductId
+");
+            q.Where($"[ListPrice] <= {maxPrice}");
+            q.Where($"[Weight] <= {maxWeight}");
+            q.Where($"[Name] LIKE {search}");
+            q.Limit(12);
+
+            var expected = @"SELECT ProductId, Name, ListPrice, Weight
+FROM [Production].[Product]
+WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
+ORDER BY ProductId
+LIMIT 12
+";
+            Assert.AreEqual(expected, q.Sql);
+        }
+
+        [Test]
+        public void TestLimitWithOffset()
+        {
+            var q = cn.QueryBuilder(
+$@"SELECT ProductId, Name, ListPrice, Weight
+FROM [Production].[Product]
+/**where**/
+ORDER BY ProductId
+");
+            q.Where($"[ListPrice] <= {maxPrice}");
+            q.Where($"[Weight] <= {maxWeight}");
+            q.Where($"[Name] LIKE {search}");
+            q.Limit(12, 60);
+
+            var expected = @"SELECT ProductId, Name, ListPrice, Weight
+FROM [Production].[Product]
+WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
+ORDER BY ProductId
+LIMIT 12 OFFSET 60
+";
+            Assert.AreEqual(expected, q.Sql);
         }
     }
 }

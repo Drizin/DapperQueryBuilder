@@ -1,11 +1,8 @@
-﻿using Dapper;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace DapperQueryBuilder
 {
@@ -21,6 +18,7 @@ namespace DapperQueryBuilder
         private readonly Filters _filters = new Filters();
         private readonly List<string> _froms = new List<string>();
         private readonly List<string> _selects = new List<string>();
+        private Limit _limit;
         private readonly CommandBuilder _commandBuilder;
         #endregion
 
@@ -178,6 +176,12 @@ namespace DapperQueryBuilder
                     }
                 }
 
+                if (_limit != null)
+                {
+                    var limitString = _limit.CreateSql();
+                    finalSql.AppendLine(limitString);
+                }
+
                 return finalSql.ToString();
             }
         }
@@ -250,6 +254,29 @@ namespace DapperQueryBuilder
                 _selects.Add(Parameters.MergeParameters(parsedStatement.Parameters, parsedStatement.Sql));
             else
                 _selects.Add(parsedStatement.Sql);
+            return this;
+        }
+
+        /// <summary>
+        /// Limits the sql query to only return the given number of rows
+        /// </summary>
+        /// <param name="numOfRows">Number of rows that the query should return</param>
+        /// <returns></returns>
+        public virtual QueryBuilder Limit(int numOfRows)
+        {
+            _limit = new Limit(numOfRows);
+            return this;
+        }
+
+        /// <summary>
+        /// Limits the sql query to only return the given number of rows. Offsets the rows by the given offset amount
+        /// </summary>
+        /// <param name="numOfRows">Number of rows that the query should return</param>
+        /// <param name="offset">How many rows to offset before selecting the rows</param>
+        /// <returns></returns>
+        public virtual QueryBuilder Limit(int numOfRows, int offset)
+        {
+            _limit = new Limit(numOfRows, offset);
             return this;
         }
     }
