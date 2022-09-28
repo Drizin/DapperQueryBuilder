@@ -169,5 +169,17 @@ LIMIT 12 OFFSET 60
 ";
             Assert.AreEqual(expected, q.Sql);
         }
+
+        [Test]
+        public void TestLimitWithoutNewLine()
+        {
+            var q = cn.QueryBuilder($@"SElECT Name FROM [Production].[Product]");
+            q.Limit(10);
+
+            var expected = $@"SElECT Name FROM [Production].[Product]
+LIMIT 10
+";
+            Assert.AreEqual(expected, q.Sql);
+        }
     }
 }

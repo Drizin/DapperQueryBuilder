@@ -179,7 +179,12 @@ namespace DapperQueryBuilder
                 if (_limit != null)
                 {
                     var limitString = _limit.CreateSql();
+                    //If the last character is not a new line character, insert a new line character so the LIMIT is always on its own line
+                    var lastCharacter = finalSql[finalSql.Length - 1];
+                    if (!lastCharacter.Equals('\n'))
+                        finalSql.AppendLine();
                     finalSql.AppendLine(limitString);
+
                 }
 
                 return finalSql.ToString();
