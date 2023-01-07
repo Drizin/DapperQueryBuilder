@@ -8,7 +8,7 @@
     <Description>Dapper Query Builder using Fluent API and String Interpolation</Description>
     <Copyright>Rick Drizin</Copyright>
     <Company>Rick Drizin</Company>
-    <Version>1.2.7</Version>
+    <Version>1.2.8</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Title>DapperQueryBuilder (Strong Named)</Title>
     <PackageId>DapperQueryBuilder.StrongName</PackageId>
