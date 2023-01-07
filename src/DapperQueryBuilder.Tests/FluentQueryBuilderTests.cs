@@ -328,6 +328,22 @@ WHERE [CustomerId] = @p3 AND [Status] IN @parray4
             Assert.That(orderItems.Any());
         }
 
+        [Test]
+        public void TestQueryBuilderWithNestedQueryBuilder()
+        {
+            string val1 = "val1";
+            string val2 = "val2";
+            QueryBuilder condition = cn.QueryBuilder($"col3 = {val2}");
+
+            var q = cn.QueryBuilder($@"SELECT col1, {val1} as col2 FROM Table1 WHERE {condition}");
+
+            Assert.AreEqual("SELECT col1, @p0 as col2 FROM Table1 WHERE col3 = @p1", q.Sql);
+
+            Assert.AreEqual(2, q.Parameters.Count);
+            Assert.AreEqual(val1, q.Parameters["p0"].Value);
+            Assert.AreEqual(val2, q.Parameters["p1"].Value);
+        }
+
 
     }
 }

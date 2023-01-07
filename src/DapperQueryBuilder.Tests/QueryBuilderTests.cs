@@ -124,5 +124,37 @@ ORDER BY ProductId
             Assert.AreEqual(123, p0.Value);
             Assert.AreEqual(321, p1.Value);
         }
+
+        [Test]
+        public void TestQueryBuilderWithNestedFormattableString2()
+        {
+            int orgId = 123;
+            FormattableString otherColumns = $"{"111111111"} AS {"ssn":raw}";
+            FormattableString innerQuery = $"SELECT Id, Name, {otherColumns} FROM SomeTable where OrganizationId={orgId}";
+            var q = cn.QueryBuilder($"SELECT FROM ({innerQuery}) a join AnotherTable b on a.Id=b.Id where b.OrganizationId={321}");
+
+            Assert.AreEqual("SELECT FROM (SELECT Id, Name, @p0 AS ssn FROM SomeTable where OrganizationId=@p1) a join AnotherTable b on a.Id=b.Id where b.OrganizationId=@p2", q.Sql);
+
+            Assert.AreEqual(3, q.Parameters.Count);
+            Assert.AreEqual("111111111", q.Parameters["p0"].Value);
+            Assert.AreEqual(123, q.Parameters["p1"].Value);
+            Assert.AreEqual(321, q.Parameters["p2"].Value);
+        }
+
+        [Test]
+        public void TestQueryBuilderWithNestedFormattableString3()
+        {
+            string val1 = "val1";
+            string val2 = "val2";
+            FormattableString condition = $"col3 = {val2}";
+
+            var q = cn.QueryBuilder($@"SELECT col1, {val1} as col2 FROM Table1 WHERE {condition}");
+
+            Assert.AreEqual("SELECT col1, @p0 as col2 FROM Table1 WHERE col3 = @p1", q.Sql);
+
+            Assert.AreEqual(2, q.Parameters.Count);
+            Assert.AreEqual(val1, q.Parameters["p0"].Value);
+            Assert.AreEqual(val2, q.Parameters["p1"].Value);
+        }
     }
 }
