@@ -117,7 +117,7 @@ namespace DapperQueryBuilder
                     {
                         subSql = (Parameters.MergeParameters(nestedStatement.Parameters, nestedStatement.Sql) ?? subSql);
                     }
-                    sb.Append(nestedStatement.Sql);
+                    sb.Append(subSql);
                     continue;
                 }
                 else if (arg is ICompleteCommand innerQuery) //Support nested QueryBuilder, CommandBuilder or FluentQueryBuilder
