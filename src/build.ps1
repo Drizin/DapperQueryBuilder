@@ -26,7 +26,7 @@ dotnet build -c release DapperQueryBuilder\DapperQueryBuilder.csproj
 & $msbuild "DapperQueryBuilder\DapperQueryBuilder.csproj" `
            /t:Pack                                        `
            /p:PackageOutputPath="..\packages-local\"      `
-           '/p:targetFrameworks="net461;netstandard2.0;net5.0"'  `
+           '/p:targetFrameworks="netstandard2.0;net462;net472;net5.0;net6.0;net7.0"'  `
            /p:Configuration=$configuration                `
            /p:IncludeSymbols=true                         `
            /p:SymbolPackageFormat=snupkg                  `
@@ -38,7 +38,7 @@ dotnet build -c release DapperQueryBuilder.StrongName\DapperQueryBuilder.StrongN
 & $msbuild "DapperQueryBuilder.StrongName\DapperQueryBuilder.StrongName.csproj" `
            /t:Pack                                        `
            /p:PackageOutputPath="..\packages-local\"      `
-           '/p:targetFrameworks="net461;netstandard2.0;net5.0"'  `
+           '/p:targetFrameworks="netstandard2.0;net462;net472;net5.0;net6.0;net7.0"'  `
            /p:Configuration=$configuration                `
            /p:IncludeSymbols=true                         `
            /p:SymbolPackageFormat=snupkg                  `

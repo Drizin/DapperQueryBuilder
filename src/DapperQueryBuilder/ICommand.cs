@@ -1,8 +1,5 @@
-﻿using Dapper;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
-using System.Text;
 
 namespace DapperQueryBuilder
 {
@@ -19,11 +16,13 @@ namespace DapperQueryBuilder
         /// <summary>
         /// Parameters of Command
         /// </summary>
-        ParameterInfos Parameters { get; }
+        ParametersDictionary DapperParameters { get; }
+
+        [Obsolete("Use DapperParameters")] ParametersDictionary Parameters { get; }
 
         /// <summary>
         /// Underlying connection
         /// </summary>
-        IDbConnection Connection { get; }
+        IDbConnection DbConnection { get; }
     }
 }

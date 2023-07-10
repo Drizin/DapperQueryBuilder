@@ -1,3 +1,4 @@
+using InterpolatedSql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -22,8 +23,7 @@ namespace DapperQueryBuilder.Tests
         string expected = @"SELECT ProductId, Name, ListPrice, Weight
 FROM [Production].[Product]
 WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
-ORDER BY ProductId
-";
+ORDER BY ProductId";
 
         public class Product
         {
@@ -112,8 +112,7 @@ LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[P
 LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]
 WHERE p.[ListPrice] BETWEEN @p0 and @p1 AND cat.[Name] IS NOT NULL
 GROUP BY cat.[Name], sc.[Name]
-HAVING COUNT(*)>@p2
-";
+HAVING COUNT(*)>@p2";
 
             Assert.AreEqual(expected, q.Sql);
 
@@ -134,8 +133,7 @@ HAVING COUNT(*)>@p2
             string expected = @"SELECT ProductId, Name, ListPrice, Weight
 FROM [Production].[Product]
 WHERE [ListPrice] <= @p0 AND ([Weight] <= @p1 OR [Name] LIKE @p2)
-ORDER BY ProductId
-";
+ORDER BY ProductId";
 
             var q = cn.FluentQueryBuilder()
                 .Select($"ProductId")
@@ -174,8 +172,7 @@ ORDER BY ProductId
 
             string expected = @"SELECT ProductId, Name, ListPrice, Weight
 FROM [Production].[Product]
-WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)
-";
+WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)";
 
             var q = cn.FluentQueryBuilder()
                 .Select($"ProductId, Name, ListPrice, Weight")
@@ -226,6 +223,12 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
             string where = filters.BuildFilters(parms);
 
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
+
+            Assert.AreEqual(4, parms.ParameterNames.Count());
+            Assert.AreEqual(minPrice, parms.Get<int>("p0"));
+            Assert.AreEqual(maxPrice, parms.Get<int>("p1"));
+            Assert.AreEqual(maxWeight, parms.Get<int>("p2"));
+            Assert.AreEqual(search, parms.Get<string>("p3"));
         }
 
         [Test]
@@ -262,8 +265,7 @@ LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[Prod
 WHERE p.[ListPrice] BETWEEN @p0 and @p1 AND cat.[Name] IS NOT NULL
 GROUP BY cat.[Name]
 HAVING COUNT(*)>@p2
-ORDER BY cat.[Name]
-";
+ORDER BY cat.[Name]";
 
             Assert.AreEqual(expected, q.Sql);
 
@@ -291,8 +293,7 @@ FROM [Production].[Product] p
 LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]
 LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]
 GROUP BY cat.[Name]
-HAVING COUNT(*)>@p0
-";
+HAVING COUNT(*)>@p0";
 
             Assert.AreEqual(expected, q.Sql);
 
@@ -332,11 +333,9 @@ HAVING COUNT(*)>@p0
             string expected =
                 @"SELECT * FROM [Sales].[SalesOrderDetail] WHERE [ProductId] IN (SELECT ProductId
 FROM [Production].[Product]
-WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2
-) AND [SalesOrderId] IN (SELECT SalesOrderID
+WHERE [ListPrice] <= @p0 AND [Weight] <= @p1 AND [Name] LIKE @p2) AND [SalesOrderId] IN (SELECT SalesOrderID
 FROM [Sales].[SalesOrderHeader]
-WHERE [CustomerId] = @p3 AND [Status] IN @parray4
-)";
+WHERE [CustomerId] = @p3 AND [Status] IN @parray4)";
 
             Assert.AreEqual(expected, finalQuery.Sql);
             Assert.That(finalQuery.Parameters.ParameterNames.Contains("p0"));

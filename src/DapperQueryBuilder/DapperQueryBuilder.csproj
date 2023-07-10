@@ -1,46 +1,50 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
-    <Authors>Rick Drizin</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/Drizin/DapperQueryBuilder/</PackageProjectUrl>
-    <Description>Dapper Query Builder using Fluent API and String Interpolation</Description>
-    <Copyright>Rick Drizin</Copyright>
-    <Company>Rick Drizin</Company>
-    <Version>1.2.9</Version>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Title>DapperQueryBuilder</Title>
-    <PackageId>Dapper-QueryBuilder</PackageId>
-    <DocumentationFile>DapperQueryBuilder.xml</DocumentationFile>
-	<PackageTags>dapper;query-builder;query builder;dapperquerybuilder;dapper-query-builder;dapper-interpolation;dapper-interpolated-string</PackageTags>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-	<EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- Include symbol files (*.pdb) in the main .nupkg -->
-	<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
-    <AssemblyName>DapperQueryBuilder</AssemblyName>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net462;net472;net5.0;net6.0;net7.0</TargetFrameworks>
+		<Authors>Rick Drizin</Authors>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/Drizin/DapperQueryBuilder/</PackageProjectUrl>
+		<Description>Dapper Query Builder using Fluent API and String Interpolation</Description>
+		<Copyright>Rick Drizin</Copyright>
+		<Company>Rick Drizin</Company>
+		<Version>2.0.0-beta1</Version>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<Title>DapperQueryBuilder</Title>
+		<PackageId>Dapper-QueryBuilder</PackageId>
+		<DocumentationFile>DapperQueryBuilder.xml</DocumentationFile>
+		<PackageTags>dapper;query-builder;query builder;dapperquerybuilder;dapper-query-builder;dapper-interpolation;dapper-interpolated-string</PackageTags>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<!-- Include symbol files (*.pdb) in the main .nupkg -->
+		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
+		<AssemblyName>DapperQueryBuilder</AssemblyName>
+		<Nullable>enable</Nullable>
+		<LangVersion>8.0</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-	<None Include="NuGetReadMe.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="NuGetReadMe.md" Pack="true" PackagePath="\" />
+		<PackageReference Include="Dapper" Version="2.0.123" />
+		<PackageReference Include="InterpolatedSql" Version="2.0.0-beta1" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+	</ItemGroup>
 
-  <Choose>
-    <When Condition="'$(Configuration)' == 'Debug'">
-      <ItemGroup>
-        <InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
+	<Choose>
+		<When Condition="'$(Configuration)' == 'Debug'">
+			<ItemGroup>
+				<InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<InternalsVisibleTo Include="DapperQueryBuilder.Tests" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
 </Project>

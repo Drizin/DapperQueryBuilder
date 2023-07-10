@@ -1,9 +1,7 @@
-﻿using Dapper;
+﻿using InterpolatedSql;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DapperQueryBuilder
@@ -11,16 +9,13 @@ namespace DapperQueryBuilder
     /// <summary>
     /// FluentQueryBuilder allows to build queries using a Fluent-API interface
     /// </summary>
-    public class FluentQueryBuilder : IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteCommand
+    public class FluentQueryBuilder : QueryBuilder, IEmptyQueryBuilder, ISelectBuilder, ISelectDistinctBuilder, IFromBuilder, IWhereBuilder, IGroupByBuilder, IGroupByHavingBuilder, IOrderByBuilder, ICompleteCommand
     {
 
         #region Members
-        private readonly QueryBuilder _queryBuilder;
-        private readonly List<string> _selectColumns = new List<string>();
-        private readonly List<string> _fromTables = new List<string>();
-        private readonly List<string> _orderBy = new List<string>();
-        private readonly List<string> _groupBy = new List<string>();
-        private readonly List<string> _having = new List<string>();
+        private readonly InterpolatedSqlBuilder _orderBy = new InterpolatedSqlBuilder();
+        private readonly InterpolatedSqlBuilder _groupBy = new InterpolatedSqlBuilder();
+        private readonly InterpolatedSqlBuilder _having = new InterpolatedSqlBuilder();
         private int? _rowCount = null;
         private int? _offset = null;
         private bool _isSelectDistinct = false;
@@ -32,21 +27,16 @@ namespace DapperQueryBuilder
         /// Should be constructed using .Select(), .From(), .Where(), etc.
         /// </summary>
         /// <param name="cnn"></param>
-        public FluentQueryBuilder(IDbConnection cnn)
-        {
-            _queryBuilder = new QueryBuilder(cnn);
-        }
+        public FluentQueryBuilder(IDbConnection cnn) : base(cnn) { }
         #endregion
 
-        #region Fluent API methods
+#region Fluent API methods
         /// <summary>
         /// Adds one column to the select clauses
         /// </summary>
-        public ISelectBuilder Select(FormattableString column)
+        public new ISelectBuilder Select(FormattableString column)
         {
-            var parsedStatement = new InterpolatedStatementParser(column);
-            parsedStatement.MergeParameters(this.Parameters);
-            _selectColumns.Add(parsedStatement.Sql);
+            base.Select(column);
             return this;
         }
 
@@ -67,9 +57,7 @@ namespace DapperQueryBuilder
         public ISelectDistinctBuilder SelectDistinct(FormattableString select)
         {
             _isSelectDistinct = true;
-            var parsedStatement = new InterpolatedStatementParser(select);
-            parsedStatement.MergeParameters(this.Parameters);
-            _selectColumns.Add(parsedStatement.Sql);
+            base.Select(select);
             return this;
         }
 
@@ -90,14 +78,13 @@ namespace DapperQueryBuilder
         /// You can add an alias after table name. <br />
         /// You can also add INNER JOIN, LEFT JOIN, etc (with the matching conditions).
         /// </summary>
-        public IFromBuilder From(FormattableString from)
+        public new IFromBuilder From(FormattableString from)
         {
-            var parsedStatement = new InterpolatedStatementParser(from);
-            parsedStatement.MergeParameters(this.Parameters);
-            string sql = parsedStatement.Sql;
-            if (!_fromTables.Any() && !Regex.IsMatch(sql, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
-                sql = "FROM " + sql;
-            _fromTables.Add(sql);
+            var target = new InterpolatedSqlBuilder();
+            base.Options.Parser.ParseAppend(from, target);
+            if (_froms.IsEmpty && !Regex.IsMatch(target.Sql, "\\b FROM \\b", RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace))
+                target.InsertLiteral(0, "FROM ");
+            base.From((FormattableString)target);
             return this;
         }
         //TODO: create options with InnerJoin, LeftJoin, RightJoin, FullJoin, CrossJoin? Create overloads with table alias?
@@ -108,9 +95,9 @@ namespace DapperQueryBuilder
         /// </summary>
         public IOrderByBuilder OrderBy(FormattableString orderBy)
         {
-            var parsedStatement = new InterpolatedStatementParser(orderBy);
-            parsedStatement.MergeParameters(this.Parameters);
-            _orderBy.Add(parsedStatement.Sql);
+            if (!_orderBy.IsEmpty)
+                _orderBy.AppendLiteral(", ");
+            _orderBy.Append(orderBy);
             return this;
         }
 
@@ -119,9 +106,9 @@ namespace DapperQueryBuilder
         /// </summary>
         public IGroupByBuilder GroupBy(FormattableString groupBy)
         {
-            var parsedStatement = new InterpolatedStatementParser(groupBy);
-            parsedStatement.MergeParameters(this.Parameters);
-            _groupBy.Add(parsedStatement.Sql);
+            if (!_groupBy.IsEmpty)
+                _groupBy.AppendLiteral(", ");
+            _groupBy.Append(groupBy);
             return this;
         }
 
@@ -130,9 +117,9 @@ namespace DapperQueryBuilder
         /// </summary>
         public IGroupByHavingBuilder Having(FormattableString having)
         {
-            var parsedStatement = new InterpolatedStatementParser(having);
-            parsedStatement.MergeParameters(this.Parameters);
-            _having.Add(parsedStatement.Sql);
+            if (!_having.IsEmpty)
+                _having.AppendLiteral(", ");
+            _having.Append(having);
             return this;
         }
 
@@ -146,24 +133,24 @@ namespace DapperQueryBuilder
             return this;
         }
 
-        #endregion
+#endregion
 
-        #region Where overrides
+#region Where overrides
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public IWhereBuilder Where(Filter filter)
+        public new IWhereBuilder Where(Filter filter)
         {
-            _queryBuilder.Where(filter);
+            base.Where(filter);
             return this;
         }
 
         /// <summary>
         /// Adds a new condition to where clauses.
         /// </summary>
-        public IWhereBuilder Where(Filters filters)
+        public new IWhereBuilder Where(Filters filters)
         {
-            _queryBuilder.Where(filters);
+            base.Where(filters);
             return this;
         }
 
@@ -172,64 +159,68 @@ namespace DapperQueryBuilder
         /// Adds a new condition to where clauses. <br />
         /// Parameters embedded using string-interpolation will be automatically converted into Dapper parameters.
         /// </summary>
-        public IWhereBuilder Where(FormattableString filter)
+        public new IWhereBuilder Where(FormattableString filter)
         {
-            _queryBuilder.Where(filter);
+            base.Where(filter);
             return this;
         }
-        #endregion
+#endregion
 
+#region ICompleteCommand
 
-        #region ICompleteCommand
+#region Sql
 
-        #region Sql
         /// <summary>
-        /// <inheritdoc />
+        /// Gets the combined command
         /// </summary>
-        public string Sql
+        public override InterpolatedSqlBuilder CombinedQuery
         {
             get
             {
-                //TODO: bool AutoLineBreaks - if false don't use AppendLine()
-                StringBuilder finalSql = new StringBuilder();
+                if (_cachedCombinedQuery != null)
+                    return _cachedCombinedQuery;
 
-                // If Query Template is provided, we assume it contains both SELECT and FROMs
-                if (_selectColumns.Any())
-                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT " : "")}{string.Join(", ", _selectColumns)}");
+                _cachedCombinedQuery = new InterpolatedSqlBuilder(Options);
+
+                _cachedCombinedQuery.AppendLiteral("SELECT ").AppendLiteral(_isSelectDistinct ? "DISTINCT " : "");
+                if (_selects.IsEmpty)
+                    _cachedCombinedQuery.AppendLiteral("*");
                 else
-                    finalSql.AppendLine($"SELECT {(_isSelectDistinct ? "DISTINCT " : "")}*");
+                    _cachedCombinedQuery.Append(_selects);
 
-                if (_fromTables.Any())
-                    finalSql.AppendLine($"{string.Join(Environment.NewLine, _fromTables)}"); //TODO: inner join and left/outer join shortcuts?
 
-                string filters = _queryBuilder.GetFilters();
-                if (filters != null)
-                    finalSql.AppendLine("WHERE " + filters);
 
-                if (_groupBy.Any())
-                    finalSql.AppendLine($"GROUP BY {string.Join(", ", _groupBy)}");
-                if (_having.Any())
-                    finalSql.AppendLine($"HAVING {string.Join(" AND ", _having)}");
-                if (_orderBy.Any())
-                    finalSql.AppendLine($"ORDER BY {string.Join(", ", _orderBy)}");
+                if (!_froms.IsEmpty)
+                {
+                    _froms.TrimEnd();
+                    _cachedCombinedQuery.AppendLine(_froms); //TODO: inner join and left/outer join shortcuts?
+                    // TODO: AppendLine adds linebreak BEFORE the value - is that a little counterintuitive?
+                }
+
+
+                if (_filters.Any())
+                {
+                    var filters = GetFilters()!;
+
+                    _cachedCombinedQuery.AppendLine().AppendLiteral("WHERE ").Append(filters);
+                }
+
+                if (!_groupBy.IsEmpty)
+                    _cachedCombinedQuery.AppendLine().AppendLiteral("GROUP BY").Append(_groupBy);
+                if (!_having.IsEmpty)
+                    _cachedCombinedQuery.AppendLine().AppendLiteral("HAVING ").Append(_having);
+                if (!_orderBy.IsEmpty)
+                    _cachedCombinedQuery.AppendLine().AppendLiteral("ORDER BY ").Append(_orderBy);
                 if (_rowCount != null)
-                    finalSql.AppendLine($"OFFSET {_offset ?? 0} ROWS FETCH NEXT {_rowCount} ROWS ONLY"); // TODO: PostgreSQL? "LIMIT row_count OFFSET offset"
+                    _cachedCombinedQuery.AppendLine().AppendLiteral("OFFSET ").AppendLiteral((_offset ?? 0).ToString())
+                        .AppendLiteral($"ROWS FETCH NEXT {_rowCount} ROWS ONLY"); // TODO: PostgreSQL? "LIMIT row_count OFFSET offset"
 
-                return finalSql.ToString();
+                return _cachedCombinedQuery;
             }
         }
-        #endregion
+#endregion
 
-        /// <summary>
-        /// Parameters of Query
-        /// </summary>
-        public ParameterInfos Parameters => _queryBuilder.Parameters;
-
-        /// <summary>
-        /// Underlying connection
-        /// </summary>
-        public IDbConnection Connection => _queryBuilder.Connection;
-        #endregion
+#endregion
 
     }
 }
