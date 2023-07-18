@@ -1,6 +1,6 @@
+using InterpolatedSql;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -107,6 +107,12 @@ ORDER BY ProductId
             string where = filters.BuildFilters(parms);
 
             Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
+
+            Assert.AreEqual(4, parms.ParameterNames.Count());
+            Assert.AreEqual(minPrice, parms.Get<int>("p0"));
+            Assert.AreEqual(maxPrice, parms.Get<int>("p1"));
+            Assert.AreEqual(maxWeight, parms.Get<int>("p2"));
+            Assert.AreEqual(search, parms.Get<string>("p3"));
         }
 
         [Test]

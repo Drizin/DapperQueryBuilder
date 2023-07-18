@@ -1,4 +1,4 @@
-using Dapper;
+using InterpolatedSql;
 using NUnit.Framework;
 using System;
 using System.Collections;
@@ -19,7 +19,7 @@ namespace DapperQueryBuilder.Tests
         public CommandBuilderTests() { } // nunit requires parameterless constructor
         public CommandBuilderTests(bool reuseIdenticalParameters)
         {
-            DapperQueryBuilderOptions.ReuseIdenticalParameters = reuseIdenticalParameters;
+            InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters = reuseIdenticalParameters;
         }
 
         #region Setup
@@ -49,12 +49,13 @@ namespace DapperQueryBuilder.Tests
             int subCategoryId = 12;
 
             var query = cn
-                .QueryBuilder($@"
+                .QueryBuilder($$"""
                 SELECT * FROM [Production].[Product]
                 WHERE
-                [Name] LIKE {productName}
-                AND [ProductSubcategoryID] = {subCategoryId}
-                ORDER BY [ProductId]");
+                [Name] LIKE {{productName}}
+                AND [ProductSubcategoryID] = {{subCategoryId}}
+                ORDER BY [ProductId]
+                """);
 
             Assert.AreEqual(@"
 SELECT * FROM [Production].[Product]
@@ -74,12 +75,13 @@ ORDER BY [ProductId]".TrimStart(), query.Sql);
             int subCategoryId = 12;
 
             var query = cn
-                .QueryBuilder($@"
+                .QueryBuilder($$"""
                 SELECT * FROM [Production].[Product]
                 WHERE
-                [{nameof(Product.Name):raw}] LIKE {productName}
-                AND [ProductSubcategoryID] = {subCategoryId}
-                ORDER BY [ProductId]");
+                [{{nameof(Product.Name):raw}}] LIKE {{productName}}
+                AND [ProductSubcategoryID] = {{subCategoryId}}
+                ORDER BY [ProductId]
+                """);
 
             Assert.AreEqual(@"
 SELECT * FROM [Production].[Product]
@@ -171,7 +173,9 @@ ORDER BY [ProductId]", query.Sql);
                 .AddParameter("Input1", dbType: DbType.Int32);
             //.AddParameter("Output1",  dbType: DbType.Int32, direction: ParameterDirection.Output);
             //var getter = ParameterInfos.GetSetter((MyPoco p) => p.MyValue);
-            cmd.Parameters.Add(ParameterInfo.CreateOutputParameter("Output1", poco, p => p.MyValue, ParameterInfo.OutputParameterDirection.Output, size: 4));
+            var outputParm = new DbTypeParameterInfo("Output1", size: 4);
+            outputParm.ConfigureOutputParameter(poco, p => p.MyValue, SqlParameterInfo.OutputParameterDirection.Output);
+            cmd.AddParameter(outputParm); //TODO: AddOutputParameter? move ConfigureOutputParameter inside it. // previously this was cmd.Parameters.Add, but not Parameters is get-only
             int affected = cmd.Execute(commandType: CommandType.StoredProcedure);
 
             string outputValue = cmd.Parameters.Get<string>("Output1"); // why is this being returned as string? just because I didn't provide type above?
@@ -304,10 +308,11 @@ ORDER BY [ProductId]", query.Sql);
         public void TestAutospacing2()
         {
             string search = "%mountain%";
-            var cmd = cn.CommandBuilder($@"
+            var cmd = cn.CommandBuilder($$"""
                             SELECT * FROM [Production].[Product]
-                            WHERE [Name] LIKE {search}
-                            AND 1=2");
+                            WHERE [Name] LIKE {{search}}
+                            AND 1=2
+                            """);
             Assert.AreEqual(
                 "SELECT * FROM [Production].[Product]" + Environment.NewLine + 
                 "WHERE [Name] LIKE @p0" + Environment.NewLine + 
@@ -319,10 +324,11 @@ ORDER BY [ProductId]", query.Sql);
         {
             string productNumber = "EC-M092";
             int productId = 328;
-            var cmd = cn.CommandBuilder($@"
+            var cmd = cn.CommandBuilder($$"""
                 UPDATE [Production].[Product]
-                SET [ProductNumber]={productNumber}
-                WHERE [ProductId]={productId}");
+                SET [ProductNumber]={{productNumber}}
+                WHERE [ProductId]={{productId}}
+                """);
 
             string expected = 
                 "UPDATE [Production].[Product]" + Environment.NewLine + 
@@ -393,7 +399,7 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
             query.Append($"OR [ProductCategoryID]={subCategoryId}");
             query.Append($"OR [ProductCategoryID]={categoryId})");
 
-            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
             {
                 Assert.AreEqual(@"SELECT * FROM [table1] WHERE ([Name]=@p0 or [Author]=@p0"
                     + " or [Creator]=@p0)"
@@ -425,7 +431,7 @@ AND [ProductSubcategoryID]=@p1 ORDER BY @p2", query.Sql);
         [Test]
         public void TestRepeatedParameters2()
         {
-            if (!DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (!InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
                 return;
 
         	int? fileId = null;
@@ -525,7 +531,7 @@ SELECT @fKey", query.Sql);
             qb.Append($"{"A"}"); // @p21 should reuse @p0
             qb.Append($"{"B"}"); // @p22 should reuse @p1
 
-            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
                 Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p0 @p1", qb.Sql);
             else
                 Assert.AreEqual("@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p21,@p22 @p23", qb.Sql);
@@ -562,7 +568,7 @@ SELECT @fKey", query.Sql);
             qb.Append($"{"A"}"); // @p20 should reuse @p0
             qb.Append($"{"B"}"); // @p21 should reuse @p1
 
-            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
                 Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p0 @p1", qb.Sql);
             else
                 Assert.AreEqual("@p0 @p1 @p2 @p3 @p4 @p5 @p6 @p7 @p8 @p9 @p10 @p11 @p12 @p13 @p14 @p15 @p16 @p17 @p18 @p19 @p20 @p21", qb.Sql);
@@ -585,7 +591,7 @@ SELECT @fKey", query.Sql);
                 cmd.Append($"DELETE FROM Orders WHERE OrderId = {orderId}; ");
             cmd.Append($"INSERT INTO Logs (Action, UserId, Description) VALUES ({action}, {orderId}, {description}); ");
 
-            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
             {
                 Assert.AreEqual(cmd.Parameters.Count, 3);
                 Assert.AreEqual(cmd.Parameters.Get<int>("p0"), orderId);
@@ -691,7 +697,7 @@ select 'ok'
             var s = query.Sql;
             var p = query.Parameters;
 
-            if (DapperQueryBuilderOptions.ReuseIdenticalParameters)
+            if (InterpolatedSqlBuilder.DefaultOptions.ReuseIdenticalParameters)
             {
                 Assert.AreEqual(@"
 declare @v1 nvarchar(10)=@p0
@@ -719,7 +725,7 @@ declare @v21 nvarchar(10)=@p0
 declare @v22 nvarchar(10)=@p0
 declare @v23 nvarchar(10)=@p0
 select 'ok'
-".TrimStart(), query.Sql);
+", query.Sql);
 
                 Assert.AreEqual(query.Parameters.Get<string>("p0"), v);
                 Assert.AreEqual(query.Parameters.Get<List<int>>("parray1"), numList);
@@ -752,7 +758,7 @@ declare @v21 nvarchar(10)=@p21
 declare @v22 nvarchar(10)=@p22
 declare @v23 nvarchar(10)=@p23
 select 'ok'
-".TrimStart(), query.Sql);
+", query.Sql);
 
                 Assert.AreEqual(query.Parameters.Get<string>("p0"), v);
                 Assert.AreEqual(query.Parameters.Get<string>("p1"), v);
@@ -784,7 +790,6 @@ BEGIN
     EXEC [dbo].[uspGetEmployeeManagers] @BusinessEntityID = @BusinessEntityID
 
 END").Execute();
-
             var q = cn.CommandBuilder($"[dbo].[uspGetEmployeeManagers_Twice]")
                 .AddParameter("BusinessEntityID", 280);
 

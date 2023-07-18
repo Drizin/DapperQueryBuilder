@@ -13,6 +13,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     <PackageProjectUrl>https://github.com/Drizin/DapperQueryBuilder/</PackageProjectUrl>
+	  <LangVersion>11.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
