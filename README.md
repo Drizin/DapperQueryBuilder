@@ -3,6 +3,20 @@
 [![Nuget](https://img.shields.io/nuget/v/DapperQueryBuilder.StrongName?label=DapperQueryBuilder.StrongName)](https://www.nuget.org/packages/DapperQueryBuilder.StrongName)
 [![Downloads](https://img.shields.io/nuget/dt/DapperQueryBuilder.StrongName.svg)](https://www.nuget.org/packages/DapperQueryBuilder.StrongName)
 
+# **IMPORTANT: Deprecation Notice**
+
+DapperQueryBuilder was fully rewritten into a new library [InterpolatedSql.Dapper](https://github.com/Drizin/InterpolatedSql/tree/main/src/InterpolatedSql.Dapper).  
+There is a new library [InterpolatedSql](https://github.com/Drizin/InterpolatedSql/) which is Database-agnostic and **ORM agnostic** (does not depend on Dapper), and very extensible.  
+Then there is [InterpolatedSql.Dapper](https://github.com/Drizin/InterpolatedSql/tree/main/src/InterpolatedSql.Dapper) which extends the InterpolatedSql core library by adding Dapper integration and by mapping Dapper types.
+
+The new library InterpolatedSql.Dapper has some major advantages when compared to the DapperQueryBuilder:
+
+- Extensibility: it's possible to subclass the SqlBuilders and make your own customizations (e.g. adding new custom properties)
+- Performance was heavily improved (regex parsing and argument shifting are kept to a minimum)
+- Leverages C# 10 InterpolatedStringHandlers (when available)
+- Less coupled with Dapper - so it's easier to switch to other ORMs or Micro ORMs.
+
+
 # Dapper Query Builder
 
 **Dapper Query Builder using String Interpolation and Fluent API**
