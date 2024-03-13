@@ -162,5 +162,44 @@ ORDER BY ProductId
             Assert.AreEqual(val1, q.Parameters["p0"].Value);
             Assert.AreEqual(val2, q.Parameters["p1"].Value);
         }
+
+        [Test]
+        public void TestMultipleFilterExtensions()
+        {
+            var storageFolder = "_CALCENGINES";
+			var sqlTestNamePattern = "'%~_Test.%' ESCAPE '~'";
+            var regularNames = new[] { "Conduent_1_CE" };
+
+            var qb = cn.QueryBuilder(@$"
+				SELECT COUNT(*) TotalCount
+				FROM [File] f
+					INNER JOIN Folder fo ON f.Folder = fo.UID
+				WHERE fo.Name = {storageFolder:varchar(200)} AND f.Name NOT LIKE {sqlTestNamePattern:raw} AND f.Deleted != 1 /**filters**/
+
+				SELECT COUNT(*) TotalCount
+				FROM [File] f
+					INNER JOIN Folder fo ON f.Folder = fo.UID
+				WHERE fo.Name = {storageFolder:varchar(200)} AND f.Name NOT LIKE {sqlTestNamePattern:raw} AND f.Deleted != 1 /**filters**/
+			");
+
+			var filters = new Filters(Filters.FiltersType.AND)
+            {
+                new Filter($"f.Name IN {regularNames:varchar(200)}")
+            };
+
+            qb.Where(filters);
+
+            Assert.AreEqual(@"
+				SELECT COUNT(*) TotalCount
+				FROM [File] f
+					INNER JOIN Folder fo ON f.Folder = fo.UID
+				WHERE fo.Name = @p0 AND f.Name NOT LIKE '%~_Test.%' ESCAPE '~' AND f.Deleted != 1 AND f.Name IN @parray2
+
+				SELECT COUNT(*) TotalCount
+				FROM [File] f
+					INNER JOIN Folder fo ON f.Folder = fo.UID
+				WHERE fo.Name = @p1 AND f.Name NOT LIKE '%~_Test.%' ESCAPE '~' AND f.Deleted != 1 AND f.Name IN @parray3
+			", qb.Sql);
+        }
     }
 }

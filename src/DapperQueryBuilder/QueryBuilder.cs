@@ -146,29 +146,45 @@ namespace DapperQueryBuilder
                 else
                     combinedQuery = new InterpolatedSqlBuilder(Options);
 
+                bool replaceKeyword(InterpolatedSqlBuilder builder, (string Keyword, string? Literal)[] matchInfo)
+                {
+                    bool foundMatch = false;
+                    foreach ((string keyword, string? literal) in matchInfo)
+                    {
+                        int matchPos;
+                        while ((matchPos = combinedQuery.IndexOf(keyword)) != -1)
+                        {
+                            combinedQuery.Remove(matchPos, keyword.Length);
+							if ( !string.IsNullOrEmpty( literal ) )
+							{
+								combinedQuery.InsertLiteral(matchPos, literal);
+								matchPos += literal.Length;
+							}
+                            combinedQuery.Insert(matchPos, builder);
+                            foundMatch = true;
+                        }
+                    }
+                    return foundMatch;
+                }
+
                 if (_filters.Any())
                 {
-                    var filters = GetFilters()!;
+                    InterpolatedSqlBuilder filters = GetFilters()!;
 
-                    string matchKeyword;
-                    int matchPos;
-                    if (((matchKeyword = "/**where**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                        ((matchKeyword = "{where}")     != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                    {
-                        // Template has a Placeholder for Filters
-                        filters.InsertLiteral(0, "WHERE ");
-                        combinedQuery.Remove(matchPos, matchKeyword.Length);
-                        combinedQuery.Insert(matchPos, filters);
-                    }
-                    else if (((matchKeyword = "/**filters**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                             ((matchKeyword = "{filters}")     != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                    {
-                        // Template has a Placeholder for Filters
-                        filters.InsertLiteral(0, "AND ");
-                        combinedQuery.Remove(matchPos, matchKeyword.Length);
-                        combinedQuery.Insert(matchPos, filters);
-                    }
-                    else
+                    bool foundMatch = replaceKeyword( 
+						filters,
+						new (string Keyword, string? Literal)[]
+						{
+							// Template has a Placeholder for Filters
+							("/**where**/", "WHERE "),
+							("{where}", "WHERE "),							
+							("/**filters**/", "AND "),
+							("{filters}", "AND ")
+						}
+					);
+
+
+                    if ( !foundMatch )
                     {
                         //TODO: if Query Template was provided, check if Template ends with "WHERE" or "WHERE 1=1" or "WHERE 0=0", or "WHERE 1=1 AND", etc. remove all that and replace.
                         // else...
@@ -181,23 +197,19 @@ namespace DapperQueryBuilder
                 if (_froms.Sql?.Length > 0)
                 {
                     _froms.TrimEnd();
-                    string matchKeyword;
-                    int matchPos;
-                    if (((matchKeyword = "/**from**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                        ((matchKeyword = "{from}")     != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                    {
-                        // Template has a Placeholder for FROMs
-                        _froms.InsertLiteral(0, "FROM ");
-                        combinedQuery.Remove(matchPos, matchKeyword.Length);
-                        combinedQuery.Insert(matchPos, _froms);
-                    }
-                    else if (((matchKeyword = "/**joins**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                            ((matchKeyword = "{joins}")      != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                    {
-                        // Template has a placeholder for JOINS (yeah - JOINS and FROMS are currently using same variable)
-                        combinedQuery.Remove(matchPos, matchKeyword.Length);
-                        combinedQuery.Insert(matchPos, _froms);
-                    }
+
+					replaceKeyword( 
+						_froms,
+						new (string Keyword, string? Literal)[]
+						{
+							// Template has a Placeholder for FROMs
+							("/**from**/", "FROM "),
+							("{from}", "FROM "),
+							// Template has a placeholder for JOINS (yeah - JOINS and FROMS are currently using same variable)
+							("/**joins**/", null),
+							("{joins}", null)
+						}
+					);
                 }
 
                 if (_selects.Sql?.Length > 0)
@@ -206,25 +218,21 @@ namespace DapperQueryBuilder
 
                     if (_selects.Sql?.Length > 0)
                     {
-                        string matchKeyword;
-                        int matchPos;
-                        if (((matchKeyword = "/**select**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                            ((matchKeyword = "{select}")     != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                        {
-                            // Template has a Placeholder for SELECT
-                            _selects.InsertLiteral(0, "SELECT ");
-                            combinedQuery.Remove(matchPos, matchKeyword.Length);
-                            combinedQuery.Insert(matchPos, _selects);
-                        }
-                        else if (((matchKeyword = "/**selects**/") != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1) ||
-                                ((matchKeyword = "{selects}")      != null && (matchPos = combinedQuery.IndexOf(matchKeyword)) != -1))
-                        {
-                            // Template has a placeholder for SELECTS - which means that
-                            // SELECT should be already in template and user just wants to add more columns using "selects" placeholder
-                            _selects.InsertLiteral(0, ", ");
-                            combinedQuery.Remove(matchPos, matchKeyword.Length);
-                            combinedQuery.Insert(matchPos, _selects);
-                        }
+						var selectsLiteral = !_selects.ToString().StartsWith(", ") ? ", " : null;
+
+						replaceKeyword( 
+							_selects,
+							new (string Keyword, string? Literal)[]
+							{
+								// Template has a Placeholder for SELECT
+								("/**select**/", "SELECT "),
+								("{select}", "SELECT "),
+								// Template has a placeholder for SELECTS - which means that
+								// SELECT should be already in template and user just wants to add more columns using "selects" placeholder
+								("/**selects**/", selectsLiteral),
+								("{selects}", selectsLiteral)
+							}
+						);
                     }
                 }
 
