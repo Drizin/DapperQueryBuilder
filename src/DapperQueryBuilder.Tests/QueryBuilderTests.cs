@@ -103,16 +103,16 @@ ORDER BY ProductId
                 new Filter($"[Name] LIKE {search}")
             });
 
-            Dapper.DynamicParameters parms = new Dapper.DynamicParameters();
-            string where = filters.BuildFilters(parms);
+            var where = filters.Build();
 
-            Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
+            Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where.Sql);
+            var parms = where.SqlParameters;
 
-            Assert.AreEqual(4, parms.ParameterNames.Count());
-            Assert.AreEqual(minPrice, parms.Get<int>("p0"));
-            Assert.AreEqual(maxPrice, parms.Get<int>("p1"));
-            Assert.AreEqual(maxWeight, parms.Get<int>("p2"));
-            Assert.AreEqual(search, parms.Get<string>("p3"));
+            Assert.AreEqual(4, parms.Count());
+            Assert.AreEqual(minPrice, parms[0].Argument);
+            Assert.AreEqual(maxPrice, parms[1].Argument);
+            Assert.AreEqual(maxWeight, parms[2].Argument);
+            Assert.AreEqual(search, parms[3].Argument);
         }
 
         [Test]

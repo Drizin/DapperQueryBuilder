@@ -1,12 +1,12 @@
 ﻿using Dapper;
-using InterpolatedSql;
+using InterpolatedSql.SqlBuilders;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace DapperQueryBuilder
+namespace InterpolatedSql.Dapper
 {
     /// <summary>
     /// Maps from <see cref="InterpolatedSql.SqlParameterInfo" /> to Dapper Parameters.
@@ -23,7 +23,7 @@ namespace DapperQueryBuilder
                 pos.ToString();
         }
 
-        private bool IsEnumerable(object? value)
+        protected bool IsEnumerable(object? value)
         {
             if (value == null || value is DBNull)  //SqlMapper.GetDbType
                 return false;

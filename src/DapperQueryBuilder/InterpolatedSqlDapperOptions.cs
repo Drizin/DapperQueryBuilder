@@ -1,11 +1,11 @@
 ﻿using InterpolatedSql;
 
-namespace DapperQueryBuilder
+namespace InterpolatedSql.Dapper
 {
     /// <summary>
     /// Global Options
     /// </summary>
-    public class DapperQueryBuilderOptions
+    public class InterpolatedSqlDapperOptions
     {
         /// <summary>
         /// Responsible for parsing SqlParameters (see <see cref="IInterpolatedSql.SqlParameters"/>) 

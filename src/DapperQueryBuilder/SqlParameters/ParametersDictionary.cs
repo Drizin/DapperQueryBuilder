@@ -1,11 +1,11 @@
 ﻿using Dapper;
-using InterpolatedSql;
+using InterpolatedSql.Dapper.SqlBuilders;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace DapperQueryBuilder
+namespace InterpolatedSql.Dapper
 {
     /// <summary>
     /// List of SQL Parameters that are passed to Dapper methods
@@ -24,10 +24,13 @@ namespace DapperQueryBuilder
 
         /// Creates a <see cref="ParametersDictionary"/> built from Implicit Parameters (loaded from <see cref="IInterpolatedSql.SqlParameters" />)
         /// and Explicit Parameters (loaded from <see cref="IInterpolatedSql.ExplicitParameters"/>)
-        public static ParametersDictionary LoadFrom(IInterpolatedSql sql) 
+        public static ParametersDictionary LoadFrom(IInterpolatedSql sql, Func<InterpolatedSqlParameter, int, string>? calculateAutoParameterName = null) 
         {
+            sql = (sql as ISqlEnricher)?.GetEnrichedSql() ?? sql;
             var parameters = new ParametersDictionary();
             //HashSet<string> parmNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase); //TODO: check for name clashes, rename as required
+
+            calculateAutoParameterName ??=  ((sql as IDapperSqlBuilder)?.Options?.CalculateAutoParameterName ?? InterpolatedSql.SqlBuilders.InterpolatedSqlBuilderOptions.DefaultOptions.CalculateAutoParameterName);
 
             for (int i = 0; i < sql.ExplicitParameters.Count; i++)
             {
@@ -39,7 +42,7 @@ namespace DapperQueryBuilder
                 // ParseArgument usually just returns parmValue (dbType and direction are only extracted if explicitly defined using format specifiers)
                 // Dapper will pick the right DbType even if you don't explicitly specify the DbType - and for most cases size don't need to be specified
 
-                var parmName = sql.Options.CalculateAutoParameterName(sql.SqlParameters[i], i);
+                var parmName = calculateAutoParameterName(sql.SqlParameters[i], i);
                 var parmValue = sql.SqlParameters[i].Argument;
                 var format = sql.SqlParameters[i].Format;
 

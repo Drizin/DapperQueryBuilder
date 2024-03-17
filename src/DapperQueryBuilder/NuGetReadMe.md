@@ -75,12 +75,12 @@ var products = q.Query<Product>();
 ## Static Command
 
 ```cs
-var cmd = cn.CommandBuilder($"DELETE FROM Orders WHERE OrderId = {orderId};");
+var cmd = cn.SqlBuilder($"DELETE FROM Orders WHERE OrderId = {orderId};");
 int deletedRows = cmd.Execute();
 ```
 
 ```cs
-cn.CommandBuilder($@"
+cn.SqlBuilder($@"
    INSERT INTO Product (ProductName, ProductSubCategoryId)
    VALUES ({productName}, {ProductSubcategoryID})
 ").Execute();
@@ -92,7 +92,7 @@ cn.CommandBuilder($@"
 In a single roundtrip we can run multiple SQL commands:
 
 ```cs
-var cmd = cn.CommandBuilder();
+var cmd = cn.SqlBuilder();
 cmd += $"DELETE FROM Orders WHERE OrderId = {orderId}; ";
 cmd += $"INSERT INTO Logs (Action, UserId, Description) VALUES ({action}, {orderId}, {description}); ";
 cmd.Execute();

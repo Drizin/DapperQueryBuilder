@@ -1,4 +1,5 @@
 using InterpolatedSql;
+using InterpolatedSql.SqlBuilders;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -52,15 +53,16 @@ ORDER BY ProductId";
                 .Where($"[Weight] <= {maxWeight}")
                 .Where($"[Name] LIKE {search}")
                 .OrderBy($"ProductId")
+                .Build()
                 ;
 
             Assert.AreEqual(expected, q.Sql);
-            Assert.That(q.Parameters.ParameterNames.Contains("p0"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p1"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p2"));
-            Assert.AreEqual(q.Parameters.Get<int>("p0"), maxPrice);
-            Assert.AreEqual(q.Parameters.Get<int>("p1"), maxWeight);
-            Assert.AreEqual(q.Parameters.Get<string>("p2"), search);
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p0"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p1"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p2"));
+            Assert.AreEqual(q.DapperParameters.Get<int>("p0"), maxPrice);
+            Assert.AreEqual(q.DapperParameters.Get<int>("p1"), maxWeight);
+            Assert.AreEqual(q.DapperParameters.Get<string>("p2"), search);
 
             var products = q.Query<Product>();
             
@@ -85,7 +87,7 @@ ORDER BY ProductId";
                 .From($"[Production].[Product] p")
                 .From($"INNER JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
                 .From($"INNER JOIN [Production].[ProductCategory] c ON sc.[ProductCategoryID]=c.[ProductCategoryID]")
-                .Where($"c.[Name] IN {categories}");
+                .Where($"c.[Name] IN {categories}").Build();
             var prods = q.Query<ProductCategories>();
         }
 
@@ -103,7 +105,8 @@ ORDER BY ProductId";
                 .Where($"cat.[Name] IS NOT NULL")
                 .GroupBy($"cat.[Name]")
                 .GroupBy($"sc.[Name]")
-                .Having($"COUNT(*)>{5}");
+                .Having($"COUNT(*)>{5}")
+                .Build();
 
             string expected =
 @"SELECT cat.[Name] as [Category], sc.[Name] as [Subcategory], AVG(p.[ListPrice]) as [AveragePrice]
@@ -147,15 +150,15 @@ ORDER BY ProductId";
                     $"[Name] LIKE {search}"
                 ))
                 .OrderBy($"ProductId")
-                ;
+                .Build();
 
             Assert.AreEqual(expected, q.Sql);
-            Assert.That(q.Parameters.ParameterNames.Contains("p0"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p1"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p2"));
-            Assert.AreEqual(q.Parameters.Get<int>("p0"), maxPrice);
-            Assert.AreEqual(q.Parameters.Get<int>("p1"), maxWeight);
-            Assert.AreEqual(q.Parameters.Get<string>("p2"), search);
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p0"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p1"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p2"));
+            Assert.AreEqual(q.DapperParameters.Get<int>("p0"), maxPrice);
+            Assert.AreEqual(q.DapperParameters.Get<int>("p1"), maxWeight);
+            Assert.AreEqual(q.DapperParameters.Get<string>("p2"), search);
 
             var products = q.Query<Product>();
 
@@ -184,17 +187,18 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
                 .Where(new Filters(Filters.FiltersType.OR,
                     $"[Weight] <= {maxWeight}",
                     $"[Name] LIKE {search}"
-                ));
+                ))
+                .Build();
 
             Assert.AreEqual(expected, q.Sql);
-            Assert.That(q.Parameters.ParameterNames.Contains("p0"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p1"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p2"));
-            Assert.That(q.Parameters.ParameterNames.Contains("p3"));
-            Assert.AreEqual(q.Parameters.Get<int>("p0"), minPrice);
-            Assert.AreEqual(q.Parameters.Get<int>("p1"), maxPrice);
-            Assert.AreEqual(q.Parameters.Get<int>("p2"), maxWeight);
-            Assert.AreEqual(q.Parameters.Get<string>("p3"), search);
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p0"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p1"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p2"));
+            Assert.That(q.DapperParameters.ParameterNames.Contains("p3"));
+            Assert.AreEqual(q.DapperParameters.Get<int>("p0"), minPrice);
+            Assert.AreEqual(q.DapperParameters.Get<int>("p1"), maxPrice);
+            Assert.AreEqual(q.DapperParameters.Get<int>("p2"), maxWeight);
+            Assert.AreEqual(q.DapperParameters.Get<string>("p3"), search);
 
             var products = q.Query<Product>();
         }
@@ -219,16 +223,16 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
                 new Filter($"[Name] LIKE {search}")
             });
             
-            Dapper.DynamicParameters parms = new Dapper.DynamicParameters();
-            string where = filters.BuildFilters(parms);
+            var where = filters.Build();
 
-            Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where);
+            Assert.AreEqual(@"WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name] LIKE @p3)", where.Sql);
+            var parms = where.SqlParameters;
 
-            Assert.AreEqual(4, parms.ParameterNames.Count());
-            Assert.AreEqual(minPrice, parms.Get<int>("p0"));
-            Assert.AreEqual(maxPrice, parms.Get<int>("p1"));
-            Assert.AreEqual(maxWeight, parms.Get<int>("p2"));
-            Assert.AreEqual(search, parms.Get<string>("p3"));
+            Assert.AreEqual(4, parms.Count());
+            Assert.AreEqual(minPrice, parms[0].Argument);
+            Assert.AreEqual(maxPrice, parms[1].Argument);
+            Assert.AreEqual(maxWeight, parms[2].Argument);
+            Assert.AreEqual(search, parms[3].Argument);
         }
 
         [Test]
@@ -255,7 +259,8 @@ WHERE ([ListPrice] >= @p0 AND [ListPrice] <= @p1) AND ([Weight] <= @p2 OR [Name]
                 .Where($"cat.[Name] IS NOT NULL")
                 .GroupBy($"cat.[Name]")
                 .Having($"COUNT(*)>{5}")
-                .OrderBy($"cat.[Name]");
+                .OrderBy($"cat.[Name]")
+                .Build();
 
             string expected =
                 @"SELECT cat.[Name] as [Category], AVG(p.[ListPrice]) as [AveragePrice]
@@ -285,7 +290,8 @@ ORDER BY cat.[Name]";
                 .From($"LEFT JOIN [Production].[ProductSubcategory] sc ON p.[ProductSubcategoryID]=sc.[ProductSubcategoryID]")
                 .From($"LEFT JOIN [Production].[ProductCategory] cat on sc.[ProductCategoryID]=cat.[ProductCategoryID]")
                 .GroupBy($"cat.[Name]")
-                .Having($"COUNT(*)>{5}");
+                .Having($"COUNT(*)>{5}")
+                .Build();
 
             string expected =
                 @"SELECT cat.[Name] as [Category], AVG(p.[ListPrice]) as [AveragePrice]
@@ -359,7 +365,7 @@ WHERE [CustomerId] = @p3 AND [Status] IN @parray4)";
         {
             string val1 = "val1";
             string val2 = "val2";
-            QueryBuilder condition = cn.QueryBuilder($"col3 = {val2}");
+            var condition = cn.QueryBuilder($"col3 = {val2}");
 
             var q = cn.QueryBuilder($@"SELECT col1, {val1} as col2 FROM Table1 WHERE {condition}");
 
