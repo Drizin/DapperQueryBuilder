@@ -4,9 +4,10 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using InterpolatedSql.Dapper;
 using InterpolatedSql.Dapper.SqlBuilders;
 
-namespace InterpolatedSql.Dapper
+namespace DapperQueryBuilder // namespace InterpolatedSql.Dapper
 {
     /// <summary>
     /// IDapperSqlBuilder are "statements ready to run" - this is where we extend the builders with Dapper facades

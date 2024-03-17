@@ -167,7 +167,8 @@ ORDER BY ProductId
         public void TestMultipleFilterExtensions()
         {
             var storageFolder = "_CALCENGINES";
-			var sqlTestNamePattern = "'%~_Test.%' ESCAPE '~'";
+            var storageFolder2 = "_CALCENGINES";
+            var sqlTestNamePattern = "'%~_Test.%' ESCAPE '~'";
             var regularNames = new[] { "Conduent_1_CE" };
 
             var qb = cn.QueryBuilder(@$"

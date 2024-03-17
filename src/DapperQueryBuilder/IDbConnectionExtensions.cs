@@ -4,15 +4,16 @@ using System.Data;
 using SqlBuilder = InterpolatedSql.Dapper.SqlBuilders.SqlBuilder;
 using QueryBuilder = InterpolatedSql.Dapper.SqlBuilders.QueryBuilder;
 using InterpolatedSql.Dapper.SqlBuilders;
+using InterpolatedSql;
 
-namespace InterpolatedSql.Dapper
+namespace DapperQueryBuilder
 {
     /// <summary>
     /// Extends IDbConnection to easily build QueryBuilder or SqlBuilder
     /// </summary>
     public static partial class IDbConnectionExtensions
     {
-        public static SqlBuilderFactory SqlBuilderFactory { get; set; } = SqlBuilderFactory.Default;
+        public static InterpolatedSql.Dapper.SqlBuilderFactory SqlBuilderFactory { get; set; } = InterpolatedSql.Dapper.SqlBuilderFactory.Default;
 
         #region SqlBuilder
         /// <summary>
@@ -138,6 +139,59 @@ namespace InterpolatedSql.Dapper
         public static QueryBuilder QueryBuilder(this IDbConnection cnn)
         {
             return new QueryBuilder(cnn);
+        }
+        #endregion
+
+        #region (Legacy) CommandBuilder
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Creates a new SqlBuilder over current connection
+        /// </summary>
+        /// <param name="command">SQL command</param>
+        public static SqlBuilder CommandBuilder(this IDbConnection cnn, ref InterpolatedSqlHandler command)
+        {
+            if (command.InterpolatedSqlBuilder.Options.AutoAdjustMultilineString)
+                command.AdjustMultilineString();
+            return new SqlBuilder(cnn, command.InterpolatedSqlBuilder.AsFormattableString());
+        }
+
+        /// <summary>
+        /// Creates a new SqlBuilder over current connection
+        /// </summary>
+        /// <param name="command">SQL command</param>
+        public static SqlBuilder CommandBuilder(this IDbConnection cnn, InterpolatedSqlBuilderOptions options, [System.Runtime.CompilerServices.InterpolatedStringHandlerArgument("options")] ref InterpolatedSqlHandler command)
+        {
+            if (command.InterpolatedSqlBuilder.Options.AutoAdjustMultilineString)
+                command.AdjustMultilineString();
+            return new SqlBuilder(cnn, command.InterpolatedSqlBuilder.AsFormattableString());
+        }
+
+#else
+        /// <summary>
+        /// Creates a new SqlBuilder over current connection
+        /// </summary>
+        /// <param name="command">SQL command</param>
+        public static SqlBuilder CommandBuilder(this IDbConnection cnn, FormattableString command)
+        {
+            return new SqlBuilder(cnn, command);
+        }
+
+        /// <summary>
+        /// Creates a new SqlBuilder over current connection
+        /// </summary>
+        /// <param name="command">SQL command</param>
+        public static SqlBuilder CommandBuilder(this IDbConnection cnn, InterpolatedSqlBuilderOptions options, FormattableString command)
+        {
+            return new SqlBuilder(cnn, command, options);
+        }
+#endif
+
+        /// <summary>
+        /// Creates a new empty SqlBuilder over current connection
+        /// </summary>
+        public static SqlBuilder CommandBuilder(this IDbConnection cnn, InterpolatedSqlBuilderOptions? options = null)
+        {
+            return new SqlBuilder(cnn, options);
         }
         #endregion
     }

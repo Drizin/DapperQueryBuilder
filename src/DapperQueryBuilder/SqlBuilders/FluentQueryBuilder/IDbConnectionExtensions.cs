@@ -1,7 +1,9 @@
 ﻿using System.Data;
 using InterpolatedSql.SqlBuilders.FluentQueryBuilder;
-
-namespace InterpolatedSql.Dapper.SqlBuilders.FluentQueryBuilder
+using InterpolatedSql.Dapper.SqlBuilders.FluentQueryBuilder;
+using InterpolatedSql.Dapper.SqlBuilders;
+using InterpolatedSql.Dapper;
+namespace DapperQueryBuilder
 {
     /// <summary>
     /// Extends IDbConnection to easily build FluentQueryBuilder

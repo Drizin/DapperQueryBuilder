@@ -54,5 +54,29 @@ namespace InterpolatedSql.Dapper.SqlBuilders
         }
         #endregion
 
+        #region Legacy compatibility (DapperQueryBuilder)
+        public new string Sql => base.Build().Sql;
+
+        public QueryBuilderParameters Parameters => new QueryBuilderParameters(this);
+        public class QueryBuilderParameters
+        {
+            public HashSet<string> ParameterNames;
+            protected ParametersDictionary _dapperParameters;
+            public QueryBuilderParameters(QueryBuilder<U, RB, R> builder)
+            {
+                _dapperParameters = builder.Build().DapperParameters;
+                ParameterNames = _dapperParameters.ParameterNames;
+            }
+            public T Get<T>(string parameterName)
+            {
+                return _dapperParameters.Get<T>(parameterName);
+            }
+            public SqlParameterInfo this[string parameterName]
+            {
+                get { return _dapperParameters[parameterName]; }
+            }
+            public int Count => _dapperParameters.Count;
+        }
+        #endregion
     }
 }
